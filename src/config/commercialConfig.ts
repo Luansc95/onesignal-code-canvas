@@ -25,33 +25,33 @@ export interface CommercialConfig {
 }
 
 export const COMMERCIAL_CONFIG: CommercialConfig = {
-  companyName: 'OneSignal Soluções Tecnológicas Ltda.',
-  tradingName: 'OneSignal Tech Solutions',
-  commercialEmail: 'contato@onesignal.tech',
-  supportEmail: 'suporte@onesignal.tech',
-  phoneDisplay: '(11) 99999-9999',
-  rawWhatsappNumber: '5511999999999', // Placeholder clearly defined for easy configuration
+  companyName: "OneSignal Soluções Tecnológicas Ltda.",
+  tradingName: "OneSignal Soluções Tecnológicas Ltda",
+  commercialEmail: "onesignal@outlook.com.br",
+  supportEmail: "onesignal@outlook.com.br",
+  phoneDisplay: "(11) 99999-9999",
+  rawWhatsappNumber: "5511999999999", // Placeholder clearly defined for easy configuration
   address: {
-    street: 'Av. Paulista, 1106 - Bela Vista',
-    city: 'São Paulo',
-    state: 'SP',
-    country: 'Brasil'
+    street: "Av. Paulista, 1106 - Bela Vista",
+    city: "São Paulo",
+    state: "SP",
+    country: "Brasil",
   },
-  businessHours: 'Segunda a Sexta: 08:30 às 18:30 (Sistemas em Nuvem 24/7)',
+  businessHours: "Segunda a Sexta: 08:30 às 18:30 (Sistemas em Nuvem 24/7)",
   social: {
-    linkedin: 'https://linkedin.com',
-    instagram: 'https://instagram.com'
-  }
+    linkedin: "https://linkedin.com",
+    instagram: "https://www.instagram.com/onesignal_tech/",
+  },
 };
 
-export type WhatsAppContext = 
-  | 'general' 
-  | 'consultative' 
-  | 'service' 
-  | 'project_case' 
-  | 'budget_request' 
-  | 'estimator_result'
-  | 'diagnostic_result';
+export type WhatsAppContext =
+  | "general"
+  | "consultative"
+  | "service"
+  | "project_case"
+  | "budget_request"
+  | "estimator_result"
+  | "diagnostic_result";
 
 export interface WhatsAppContextDetails {
   clientName?: string;
@@ -67,50 +67,47 @@ export interface WhatsAppContextDetails {
 /**
  * Generates contextual WhatsApp redirection URLs with professional prefilled copy
  */
-export function getWhatsAppUrl(
-  context: WhatsAppContext = 'general',
-  details?: WhatsAppContextDetails
-): string {
-  let message = 'Olá OneSignal! Gostaria de conversar sobre uma solução tecnológica para minha empresa.';
+export function getWhatsAppUrl(context: WhatsAppContext = "general", details?: WhatsAppContextDetails): string {
+  let message = "Olá OneSignal! Gostaria de conversar sobre uma solução tecnológica para minha empresa.";
 
   switch (context) {
-    case 'consultative':
+    case "consultative":
       message = details?.clientName
-        ? `Olá OneSignal! Me chamo ${details.clientName}${details.companyName ? ` da ${details.companyName}` : ''}. Gostaria de agendar uma conversa consultiva para entender a melhor solução tecnológica para nosso desafio.`
-        : 'Olá OneSignal! Gostaria de conversar com um especialista para entender qual a melhor solução tecnológica para os desafios da minha empresa.';
+        ? `Olá OneSignal! Me chamo ${details.clientName}${details.companyName ? ` da ${details.companyName}` : ""}. Gostaria de agendar uma conversa consultiva para entender a melhor solução tecnológica para nosso desafio.`
+        : "Olá OneSignal! Gostaria de conversar com um especialista para entender qual a melhor solução tecnológica para os desafios da minha empresa.";
       break;
 
-    case 'diagnostic_result':
+    case "diagnostic_result":
       message = details?.topSolution
-        ? `Olá OneSignal! Completei o Diagnóstico Inteligente no site da OneSignal (Maturidade: ${details.digitalMaturity || 'Em evolução'}). O resultado indicou foco em ${details.topSolution}. Gostaria de conversar com um especialista para entender os próximos passos.`
-        : 'Olá OneSignal! Realizei o Diagnóstico de Tecnologia no site e gostaria de conversar sobre as oportunidades identificadas para minha empresa.';
+        ? `Olá OneSignal! Completei o Diagnóstico Inteligente no site da OneSignal (Maturidade: ${details.digitalMaturity || "Em evolução"}). O resultado indicou foco em ${details.topSolution}. Gostaria de conversar com um especialista para entender os próximos passos.`
+        : "Olá OneSignal! Realizei o Diagnóstico de Tecnologia no site e gostaria de conversar sobre as oportunidades identificadas para minha empresa.";
       break;
 
-    case 'service':
+    case "service":
       message = details?.serviceTitle
         ? `Olá OneSignal! Gostaria de saber mais sobre ${details.serviceTitle} e como vocês podem aplicar essa tecnologia no meu negócio.`
-        : 'Olá OneSignal! Gostaria de mais detalhes sobre os serviços de desenvolvimento sob medida.';
+        : "Olá OneSignal! Gostaria de mais detalhes sobre os serviços de desenvolvimento sob medida.";
       break;
 
-    case 'project_case':
+    case "project_case":
       message = details?.projectName
         ? `Olá OneSignal! Vi o case "${details.projectName}" no portfólio de vocês e gostaria de avaliar a viabilidade de desenvolver uma solução semelhante para minha empresa.`
-        : 'Olá OneSignal! Vi os projetos desenvolvidos por vocês e gostaria de conversar sobre um projeto similar.';
+        : "Olá OneSignal! Vi os projetos desenvolvidos por vocês e gostaria de conversar sobre um projeto similar.";
       break;
 
-    case 'budget_request':
+    case "budget_request":
       message = details?.clientName
-        ? `Olá OneSignal! Me chamo ${details.clientName}${details.companyName ? ` da ${details.companyName}` : ''}. Gostaria de solicitar um orçamento para um projeto de ${details.serviceTitle || 'software sob medida'}.`
-        : 'Olá OneSignal! Gostaria de solicitar uma proposta técnica e orçamento para o meu projeto.';
+        ? `Olá OneSignal! Me chamo ${details.clientName}${details.companyName ? ` da ${details.companyName}` : ""}. Gostaria de solicitar um orçamento para um projeto de ${details.serviceTitle || "software sob medida"}.`
+        : "Olá OneSignal! Gostaria de solicitar uma proposta técnica e orçamento para o meu projeto.";
       break;
 
-    case 'estimator_result':
+    case "estimator_result":
       message = details?.budgetEstimated
-        ? `Olá OneSignal! Realizei uma estimativa no simulador do site (${details.serviceTitle || 'Projeto Sob Medida'} - aprox. ${details.budgetEstimated}) e gostaria de avançar para uma proposta detalhada.`
-        : 'Olá OneSignal! Utilizei o simulador de orçamento no site e gostaria de detalhar meu escopo.';
+        ? `Olá OneSignal! Realizei uma estimativa no simulador do site (${details.serviceTitle || "Projeto Sob Medida"} - aprox. ${details.budgetEstimated}) e gostaria de avançar para uma proposta detalhada.`
+        : "Olá OneSignal! Utilizei o simulador de orçamento no site e gostaria de detalhar meu escopo.";
       break;
 
-    case 'general':
+    case "general":
     default:
       if (details?.customMessage) {
         message = details.customMessage;
@@ -131,13 +128,13 @@ export function getUtmParameters(): {
   utmCampaign?: string;
   referrer?: string;
 } {
-  if (typeof window === 'undefined') return {};
+  if (typeof window === "undefined") return {};
 
   const urlParams = new URLSearchParams(window.location.search);
   return {
-    utmSource: urlParams.get('utm_source') || undefined,
-    utmMedium: urlParams.get('utm_medium') || undefined,
-    utmCampaign: urlParams.get('utm_campaign') || undefined,
-    referrer: document.referrer || undefined
+    utmSource: urlParams.get("utm_source") || undefined,
+    utmMedium: urlParams.get("utm_medium") || undefined,
+    utmCampaign: urlParams.get("utm_campaign") || undefined,
+    referrer: document.referrer || undefined,
   };
 }
