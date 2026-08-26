@@ -1,0 +1,6 @@
+{
+  "name": "OneSignal",
+  "description": "Site institucional e portfólio profissional de soluções tecnológicas sob medida, sistemas web, aplicativos móveis, automação e inteligência artificial.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
