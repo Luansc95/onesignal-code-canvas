@@ -40,7 +40,7 @@ export const COMMERCIAL_CONFIG: CommercialConfig = {
   businessHours: "Segunda a Sexta: 08:30 às 18:30 (Sistemas em Nuvem 24/7)",
   social: {
     linkedin: "https://linkedin.com",
-    instagram: "https://www.instagram.com/onesignal_tech/?utm_source=ig_web_button_share_sheet",
+    instagram: "https://www.instagram.com/onesignal_tech/",
   },
 };
 
