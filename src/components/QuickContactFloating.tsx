@@ -67,11 +67,11 @@ export const QuickContactFloating: React.FC<QuickContactFloatingProps> = ({ onOp
         <button
           id="floating-whatsapp-btn"
           onClick={handleWhatsApp}
-          className="p-3.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-950/60 border border-emerald-400/50 transition-all hover:scale-110 flex items-center justify-center relative group"
+          className="w-12 h-12 sm:w-auto sm:h-auto sm:p-3.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white shadow-xl shadow-emerald-950/60 border border-emerald-400/50 transition-all hover:scale-110 active:scale-95 flex items-center justify-center relative group"
           aria-label="Falar no WhatsApp"
         >
-          <MessageSquare className="w-6 h-6" />
-          <span className="absolute right-full mr-3 px-3 py-1 rounded-xl bg-[#071B3A]/90 text-emerald-300 text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity border border-white/15 pointer-events-none shadow-lg backdrop-blur-md">
+          <MessageSquare className="w-6 h-6 shrink-0" />
+          <span className="hidden sm:inline-block absolute right-full mr-3 px-3 py-1 rounded-xl bg-[#071B3A]/90 text-emerald-300 text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity border border-white/15 pointer-events-none shadow-lg backdrop-blur-md">
             Falar no WhatsApp
           </span>
         </button>
