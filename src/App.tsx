@@ -123,27 +123,37 @@ export default function App() {
         />
 
         {/* Why Invest in Technology Section */}
-        <WhyInvest />
+        <div className="section-lazy-render">
+          <WhyInvest />
+        </div>
 
         {/* Portfolio Section */}
-        <Portfolio 
-          onSelectProject={(project) => setSelectedProject(project)}
-          onOpenBudgetModal={() => handleOpenBudgetModal()}
-        />
+        <div className="section-lazy-render">
+          <Portfolio 
+            onSelectProject={(project) => setSelectedProject(project)}
+            onOpenBudgetModal={() => handleOpenBudgetModal()}
+          />
+        </div>
 
         {/* How We Work (Methodology) Section */}
-        <HowWeWork />
+        <div className="section-lazy-render">
+          <HowWeWork />
+        </div>
 
         {/* About OneSignal Section */}
-        <About />
+        <div className="section-lazy-render">
+          <About />
+        </div>
 
         {/* Interactive Scope & Budget Estimator Tool */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 section-lazy-render">
           <BudgetEstimator onApplyEstimateToForm={handleApplyEstimate} />
         </div>
 
         {/* Final High-Conversion Pre-Contact CTA Section */}
-        <FinalCtaSection onOpenBudgetModal={() => handleOpenBudgetModal()} />
+        <div className="section-lazy-render">
+          <FinalCtaSection onOpenBudgetModal={() => handleOpenBudgetModal()} />
+        </div>
 
         {/* Contact & Quote Request Section */}
         <ContactSection 

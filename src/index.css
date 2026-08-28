@@ -24,6 +24,18 @@
   }
 }
 
+/* Optimization utilities for rendering below-the-fold sections smoothly */
+.section-lazy-render {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 700px;
+}
+
+/* Hardware accelerated transform utilities */
+.transform-gpu {
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
