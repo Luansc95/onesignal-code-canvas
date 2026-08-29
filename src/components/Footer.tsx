@@ -179,6 +179,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenBudgetModal, onOpenPrivacy
               <span>Privacidade & Termos</span>
             )}
             <span>•</span>
+            <a href="/admin" className="hover:text-[#22D3EE] transition-colors">
+              Área Administrativa
+            </a>
+            <span>•</span>
             <span>Código 100% Proprietário</span>
             <button
               onClick={scrollToTop}
