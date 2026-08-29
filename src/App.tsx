@@ -18,8 +18,25 @@ import { BudgetModal } from './components/BudgetModal';
 import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { Project } from './types';
 import { analytics } from './services/analyticsService';
+import { useRouter } from './lib/router';
+import { authService } from './services/authService';
+
+// Admin Components
+import { AdminLayout } from './components/admin/AdminLayout';
+import { AdminLogin } from './components/admin/AdminLogin';
+import { AdminDashboard } from './components/admin/AdminDashboard';
+import { AdminProjects } from './components/admin/AdminProjects';
+import { AdminLeads } from './components/admin/AdminLeads';
+import { AdminLeadScoring } from './components/admin/AdminLeadScoring';
+import { AdminContacts } from './components/admin/AdminContacts';
+import { AdminDiagnostics } from './components/admin/AdminDiagnostics';
+import { AdminMarketing } from './components/admin/AdminMarketing';
+import { AdminAnalytics } from './components/admin/AdminAnalytics';
+import { AdminSettings } from './components/admin/AdminSettings';
+import { AdminAuditLogs } from './components/admin/AdminAuditLogs';
 
 export default function App() {
+  const { path: currentPath } = useRouter();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
@@ -30,6 +47,54 @@ export default function App() {
   const [formInitialService, setFormInitialService] = useState<string | undefined>(undefined);
   const [formInitialDesc, setFormInitialDesc] = useState<string | undefined>(undefined);
 
+  // ==========================================
+  // ADMIN PLATFORM ROUTING
+  // ==========================================
+  if (currentPath.startsWith('/admin')) {
+    const isAuthenticated = authService.isAuthenticated();
+
+    if (currentPath === '/admin/login' || !isAuthenticated) {
+      return <AdminLogin />;
+    }
+
+    const renderAdminContent = () => {
+      switch (currentPath) {
+        case '/admin':
+        case '/admin/dashboard':
+          return <AdminDashboard />;
+        case '/admin/projects':
+          return <AdminProjects />;
+        case '/admin/leads':
+          return <AdminLeads />;
+        case '/admin/leads/scoring':
+          return <AdminLeadScoring />;
+        case '/admin/contacts':
+          return <AdminContacts />;
+        case '/admin/diagnostics':
+          return <AdminDiagnostics />;
+        case '/admin/marketing':
+          return <AdminMarketing />;
+        case '/admin/analytics':
+          return <AdminAnalytics />;
+        case '/admin/settings':
+          return <AdminSettings />;
+        case '/admin/logs':
+          return <AdminAuditLogs />;
+        default:
+          return <AdminDashboard />;
+      }
+    };
+
+    return (
+      <AdminLayout currentPath={currentPath}>
+        {renderAdminContent()}
+      </AdminLayout>
+    );
+  }
+
+  // ==========================================
+  // PUBLIC WEBSITE (EXISTING SITE UNCHANGED)
+  // ==========================================
   // Open Modal helper
   const handleOpenBudgetModal = (serviceType?: string, description?: string) => {
     analytics.track('click_budget', { source: 'app_orchestrator', serviceType });
