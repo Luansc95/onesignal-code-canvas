@@ -1,0 +1,512 @@
+name: 🔄 Bidirectional Repository Sync
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+    inputs:
+      force_sync:
+        description: "Forçar sincronização ignorando divergência inicial"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bidirectional-sync-${{ github.repository }}
+  cancel-in-progress: false
+
+env:
+  SOURCE_BRANCH: main
+
+jobs:
+  sync:
+    name: Validar e sincronizar
+    runs-on: ubuntu-latest
+
+    # Commits criados pelo próprio sincronizador não iniciam
+    # outra sincronização.
+    if: >
+      !contains(
+        github.event.head_commit.message || '',
+        '[skip-bidirectional-sync]'
+      )
+
+    steps:
+
+      # =========================================================
+      # 1. CHECKOUT
+      # =========================================================
+
+      - name: 📥 Checkout do repositório atual
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # =========================================================
+      # 2. DESCOBRIR ORIGEM E DESTINO
+      # =========================================================
+
+      - name: 🧠 Detectar origem da alteração
+        id: repos
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          CURRENT_REPO="${GITHUB_REPOSITORY}"
+
+          if [ "$CURRENT_REPO" = "Luansc95/OneSignal" ]; then
+
+            echo "source_name=Google IA" >> "$GITHUB_OUTPUT"
+            echo "source_repo=Luansc95/OneSignal" >> "$GITHUB_OUTPUT"
+            echo "destination_name=Lovable" >> "$GITHUB_OUTPUT"
+            echo "destination_repo=Luansc95/onesignal-code-canvas" >> "$GITHUB_OUTPUT"
+
+          elif [ "$CURRENT_REPO" = "Luansc95/onesignal-code-canvas" ]; then
+
+            echo "source_name=Lovable" >> "$GITHUB_OUTPUT"
+            echo "source_repo=Luansc95/onesignal-code-canvas" >> "$GITHUB_OUTPUT"
+            echo "destination_name=Google IA" >> "$GITHUB_OUTPUT"
+            echo "destination_repo=Luansc95/OneSignal" >> "$GITHUB_OUTPUT"
+
+          else
+
+            echo "❌ Repositório não autorizado para sincronização."
+            exit 1
+
+          fi
+
+      - name: 📋 Exibir origem
+        run: |
+          echo "========================================"
+          echo " SINCRONIZAÇÃO BIDIRECIONAL"
+          echo "========================================"
+          echo ""
+          echo "Origem:"
+          echo "${{ steps.repos.outputs.source_repo }}"
+          echo ""
+          echo "Destino:"
+          echo "${{ steps.repos.outputs.destination_repo }}"
+          echo ""
+
+      # =========================================================
+      # 3. NODE
+      # =========================================================
+
+      - name: ⚙️ Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # =========================================================
+      # 4. DEPENDÊNCIAS
+      # =========================================================
+
+      - name: 📦 Instalar dependências
+        shell: bash
+        run: |
+          set -e
+
+          if [ -f package-lock.json ]; then
+            npm ci
+
+          elif [ -f yarn.lock ]; then
+            corepack enable
+            yarn install --frozen-lockfile
+
+          elif [ -f pnpm-lock.yaml ]; then
+            corepack enable
+            pnpm install --frozen-lockfile
+
+          elif [ -f package.json ]; then
+            npm install
+
+          else
+            echo "ℹ️ Nenhum package.json encontrado."
+          fi
+
+      # =========================================================
+      # 5. LINT
+      # =========================================================
+
+      - name: 🔎 Executar lint
+        shell: bash
+        run: |
+          if npm run | grep -q "lint"; then
+            npm run lint
+          else
+            echo "ℹ️ Projeto não possui script lint."
+          fi
+
+      # =========================================================
+      # 6. TESTES
+      # =========================================================
+
+      - name: 🧪 Executar testes
+        shell: bash
+        run: |
+          if npm run | grep -q "test"; then
+            npm test
+          else
+            echo "ℹ️ Projeto ainda não possui testes automatizados."
+          fi
+
+      # =========================================================
+      # 7. BUILD
+      # =========================================================
+
+      - name: 🏗️ Validar build
+        shell: bash
+        run: |
+          if npm run | grep -q "build"; then
+            npm run build
+          else
+            echo "ℹ️ Projeto não possui script build."
+          fi
+
+      # =========================================================
+      # 8. CONFIGURAR GIT
+      # =========================================================
+
+      - name: 🔐 Configurar Git
+        run: |
+          git config --global user.name "OneSignal Sync Bot"
+          git config --global user.email \
+            "github-actions[bot]@users.noreply.github.com"
+
+      # =========================================================
+      # 9. CLONAR DESTINO
+      # =========================================================
+
+      - name: 📥 Clonar repositório de destino
+        env:
+          SYNC_TOKEN: ${{ secrets.BIDIRECTIONAL_SYNC_TOKEN }}
+          DESTINATION_REPO: ${{ steps.repos.outputs.destination_repo }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git clone \
+            "https://x-access-token:${SYNC_TOKEN}@github.com/${DESTINATION_REPO}.git" \
+            /tmp/destination
+
+          cd /tmp/destination
+
+          git checkout main
+
+          echo "DESTINATION_INITIAL_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      # =========================================================
+      # 10. FUNÇÃO DE HASH
+      # =========================================================
+
+      - name: 🔢 Calcular fingerprints
+        id: fingerprints
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          calculate_hash() {
+
+            DIRECTORY="$1"
+
+            cd "$DIRECTORY"
+
+            git ls-files \
+              | grep -v '^.sync/' \
+              | grep -v '^.github/workflows/' \
+              | sort \
+              | while read -r file; do
+
+                  if [ -f "$file" ]; then
+                    HASH=$(sha256sum "$file" | awk '{print $1}')
+                    printf "%s  %s\n" "$HASH" "$file"
+                  fi
+
+                done \
+              | sha256sum \
+              | awk '{print $1}'
+          }
+
+          SOURCE_HASH=$(calculate_hash "$GITHUB_WORKSPACE")
+          DESTINATION_HASH=$(calculate_hash "/tmp/destination")
+
+          echo "source_hash=$SOURCE_HASH" >> "$GITHUB_OUTPUT"
+          echo "destination_hash=$DESTINATION_HASH" >> "$GITHUB_OUTPUT"
+
+          echo "Hash origem:  $SOURCE_HASH"
+          echo "Hash destino: $DESTINATION_HASH"
+
+      # =========================================================
+      # 11. VERIFICAR BASE ANTERIOR
+      # =========================================================
+
+      - name: 🔀 Detectar conflito
+        id: conflict
+        shell: bash
+        env:
+          SOURCE_HASH: ${{ steps.fingerprints.outputs.source_hash }}
+          DESTINATION_HASH: ${{ steps.fingerprints.outputs.destination_hash }}
+          FORCE_SYNC: ${{ inputs.force_sync || 'false' }}
+        run: |
+          set -euo pipefail
+
+          BASELINE=""
+
+          if [ -f ".sync/last-sync.hash" ]; then
+            BASELINE=$(cat ".sync/last-sync.hash")
+          elif [ -f "/tmp/destination/.sync/last-sync.hash" ]; then
+            BASELINE=$(cat "/tmp/destination/.sync/last-sync.hash")
+          fi
+
+          echo "Baseline anterior: ${BASELINE:-NÃO EXISTE}"
+
+          # Primeira execução
+          if [ -z "$BASELINE" ]; then
+
+            if [ "$SOURCE_HASH" = "$DESTINATION_HASH" ]; then
+              echo "✅ Repositórios já possuem o mesmo conteúdo."
+              echo "status=clean" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            if [ "$FORCE_SYNC" = "true" ]; then
+              echo "⚠️ Primeira sincronização forçada."
+              echo "status=force" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo ""
+            echo "🛑 SINCRONIZAÇÃO BLOQUEADA"
+            echo ""
+            echo "Os repositórios já possuem conteúdos diferentes"
+            echo "e ainda não existe uma base de sincronização."
+            echo ""
+            echo "Execute manualmente este workflow com:"
+            echo ""
+            echo "force_sync = true"
+            echo ""
+            exit 1
+          fi
+
+          SOURCE_CHANGED=false
+          DESTINATION_CHANGED=false
+
+          if [ "$SOURCE_HASH" != "$BASELINE" ]; then
+            SOURCE_CHANGED=true
+          fi
+
+          if [ "$DESTINATION_HASH" != "$BASELINE" ]; then
+            DESTINATION_CHANGED=true
+          fi
+
+          echo "Origem mudou: $SOURCE_CHANGED"
+          echo "Destino mudou: $DESTINATION_CHANGED"
+
+          # Os dois mudaram desde a última sincronização
+          if [ "$SOURCE_CHANGED" = "true" ] && \
+             [ "$DESTINATION_CHANGED" = "true" ]; then
+
+            if [ "$FORCE_SYNC" != "true" ]; then
+
+              echo ""
+              echo "=========================================="
+              echo "🛑 CONFLITO BIDIRECIONAL DETECTADO"
+              echo "=========================================="
+              echo ""
+              echo "Origem e destino foram alterados"
+              echo "desde a última sincronização."
+              echo ""
+              echo "Nenhum arquivo será sobrescrito."
+              echo ""
+
+              exit 1
+            fi
+
+            echo "⚠️ Conflito ignorado por force_sync."
+
+          fi
+
+          # Nada mudou
+          if [ "$SOURCE_HASH" = "$DESTINATION_HASH" ]; then
+            echo "✅ Repositórios já estão sincronizados."
+            echo "status=clean" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "status=sync" >> "$GITHUB_OUTPUT"
+
+      # =========================================================
+      # 12. BACKUP
+      # =========================================================
+
+      - name: 💾 Criar backup automático do destino
+        if: steps.conflict.outputs.status != 'clean'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd /tmp/destination
+
+          TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+          BACKUP_BRANCH="backup/sync-${TIMESTAMP}"
+
+          echo "Criando backup:"
+          echo "$BACKUP_BRANCH"
+
+          git push origin \
+            "HEAD:refs/heads/${BACKUP_BRANCH}"
+
+          echo "BACKUP_BRANCH=$BACKUP_BRANCH" >> "$GITHUB_ENV"
+
+      # =========================================================
+      # 13. VERIFICAR ALTERAÇÃO DURANTE EXECUÇÃO
+      # =========================================================
+
+      - name: 🔒 Verificar alteração concorrente
+        if: steps.conflict.outputs.status != 'clean'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd /tmp/destination
+
+          git fetch origin main
+
+          CURRENT_REMOTE_SHA=$(git rev-parse origin/main)
+
+          if [ "$CURRENT_REMOTE_SHA" != "$DESTINATION_INITIAL_SHA" ]; then
+
+            echo ""
+            echo "🛑 DESTINO ALTERADO DURANTE A SINCRONIZAÇÃO"
+            echo ""
+            echo "Anterior:"
+            echo "$DESTINATION_INITIAL_SHA"
+            echo ""
+            echo "Atual:"
+            echo "$CURRENT_REMOTE_SHA"
+            echo ""
+            echo "Sincronização cancelada."
+            echo ""
+
+            exit 1
+          fi
+
+      # =========================================================
+      # 14. COPIAR CÓDIGO
+      # =========================================================
+
+      - name: 🔄 Sincronizar arquivos
+        if: steps.conflict.outputs.status != 'clean'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rsync -av --delete \
+            --exclude=".git/" \
+            --exclude=".github/workflows/" \
+            --exclude=".sync/" \
+            --exclude="node_modules/" \
+            --exclude="dist/" \
+            "$GITHUB_WORKSPACE/" \
+            "/tmp/destination/"
+
+      # =========================================================
+      # 15. ATUALIZAR BASELINE
+      # =========================================================
+
+      - name: 🧠 Atualizar estado de sincronização
+        if: steps.conflict.outputs.status != 'clean'
+        env:
+          SOURCE_HASH: ${{ steps.fingerprints.outputs.source_hash }}
+        shell: bash
+        run: |
+          mkdir -p /tmp/destination/.sync
+
+          echo "$SOURCE_HASH" \
+            > /tmp/destination/.sync/last-sync.hash
+
+      # =========================================================
+      # 16. COMMIT DESTINO
+      # =========================================================
+
+      - name: 📤 Atualizar repositório de destino
+        if: steps.conflict.outputs.status != 'clean'
+        env:
+          SOURCE_NAME: ${{ steps.repos.outputs.source_name }}
+          DESTINATION_NAME: ${{ steps.repos.outputs.destination_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd /tmp/destination
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "ℹ️ Nenhuma alteração para sincronizar."
+            exit 0
+          fi
+
+          git commit -m \
+            "chore(sync): ${SOURCE_NAME} → ${DESTINATION_NAME} [skip-bidirectional-sync]"
+
+          git push origin main
+
+      # =========================================================
+      # 17. ATUALIZAR BASELINE DA ORIGEM
+      # =========================================================
+
+      - name: 📝 Atualizar baseline da origem
+        if: steps.conflict.outputs.status != 'clean'
+        env:
+          SOURCE_HASH: ${{ steps.fingerprints.outputs.source_hash }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cd "$GITHUB_WORKSPACE"
+
+          mkdir -p .sync
+
+          echo "$SOURCE_HASH" > .sync/last-sync.hash
+
+          git add .sync/last-sync.hash
+
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+
+          git commit -m \
+            "chore(sync-state): atualizar baseline [skip-bidirectional-sync]"
+
+          git push origin HEAD:main
+
+      # =========================================================
+      # 18. RESUMO
+      # =========================================================
+
+      - name: 📋 Resumo
+        if: always()
+        run: |
+          {
+            echo "# 🔄 Bidirectional Sync"
+            echo ""
+            echo "**Origem:** ${{ steps.repos.outputs.source_repo }}"
+            echo ""
+            echo "**Destino:** ${{ steps.repos.outputs.destination_repo }}"
+            echo ""
+            echo "**Commit:** \`${GITHUB_SHA}\`"
+            echo ""
+            echo "**Status:** ${{ job.status }}"
+            echo ""
+
+            if [ -n "${BACKUP_BRANCH:-}" ]; then
+              echo "**Backup:** \`${BACKUP_BRANCH}\`"
+            fi
+
+          } >> "$GITHUB_STEP_SUMMARY"
