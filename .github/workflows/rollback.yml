@@ -1,0 +1,99 @@
+name: ↩️ Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      backup_branch:
+        description: "Branch de backup que será restaurada"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rollback-${{ github.repository }}
+  cancel-in-progress: false
+
+jobs:
+
+  rollback:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ⚙️ Configurar Git
+        run: |
+          git config user.name "OneSignal Rollback Bot"
+          git config user.email \
+            "github-actions[bot]@users.noreply.github.com"
+
+      - name: 🔍 Validar backup informado
+        env:
+          BACKUP_BRANCH: ${{ inputs.backup_branch }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$BACKUP_BRANCH" != backup/sync-* ]]; then
+            echo "❌ Branch de backup inválida."
+            echo ""
+            echo "Formato esperado:"
+            echo "backup/sync-YYYYMMDD-HHMMSS"
+            exit 1
+          fi
+
+          git fetch origin "$BACKUP_BRANCH"
+
+      - name: 💾 Backup antes do rollback
+        run: |
+          TIMESTAMP=$(date -u +"%Y%m%d-%H%M%S")
+
+          PRE_ROLLBACK_BRANCH="backup/pre-rollback-${TIMESTAMP}"
+
+          git push origin \
+            "HEAD:refs/heads/${PRE_ROLLBACK_BRANCH}"
+
+          echo "PRE_ROLLBACK_BRANCH=$PRE_ROLLBACK_BRANCH" \
+            >> "$GITHUB_ENV"
+
+      - name: ↩️ Restaurar versão
+        env:
+          BACKUP_BRANCH: ${{ inputs.backup_branch }}
+        run: |
+          set -euo pipefail
+
+          git rm -r --ignore-unmatch .
+
+          git checkout "origin/${BACKUP_BRANCH}" -- .
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "ℹ️ O código já corresponde ao backup."
+            exit 0
+          fi
+
+          git commit -m \
+            "rollback: restaurar ${BACKUP_BRANCH}"
+
+          git push origin main
+
+      - name: 📋 Resumo
+        if: always()
+        run: |
+          {
+            echo "# ↩️ Rollback"
+            echo ""
+            echo "**Repositório:** ${GITHUB_REPOSITORY}"
+            echo ""
+            echo "**Restaurado:** \`${{ inputs.backup_branch }}\`"
+            echo ""
+            echo "**Backup pré-rollback:** \`${PRE_ROLLBACK_BRANCH:-N/A}\`"
+            echo ""
+            echo "**Status:** ${{ job.status }}"
+          } >> "$GITHUB_STEP_SUMMARY"
