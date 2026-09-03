@@ -230,6 +230,7 @@ export interface AuditLog {
   id: string;
   userId: string;
   userName: string;
+  userEmail?: string;
   userRole: AdminRole;
   action: string;
   targetType: 'project' | 'lead' | 'contact' | 'settings' | 'auth' | 'campaign';
