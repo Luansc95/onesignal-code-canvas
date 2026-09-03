@@ -23,9 +23,9 @@ export const AdminAuditLogs: React.FC = () => {
     const matchesSearch =
       log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.userEmail.toLowerCase().includes(searchTerm.toLowerCase());
+      (log.userEmail || "").toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesEntity = selectedEntity === 'all' || log.targetEntity === selectedEntity;
+    const matchesEntity = selectedEntity === 'all' || log.targetType === selectedEntity;
 
     return matchesSearch && matchesEntity;
   });
@@ -107,14 +107,14 @@ export const AdminAuditLogs: React.FC = () => {
 
                 <td className="py-3 px-3">
                   <div className="font-bold text-white">{log.userName}</div>
-                  <div className="text-[10px] text-slate-500 font-mono">{log.userEmail}</div>
+                  <div className="text-[10px] text-slate-500 font-mono">{log.userEmail || log.userId}</div>
                 </td>
 
                 <td className="py-3 px-3">
                   <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
                     log.userRole === 'admin'
                       ? 'bg-rose-500/20 text-rose-300'
-                      : log.userRole === 'manager'
+                      : log.userRole === 'commercial'
                       ? 'bg-purple-500/20 text-purple-300'
                       : 'bg-cyan-500/20 text-cyan-300'
                   }`}>
@@ -123,7 +123,7 @@ export const AdminAuditLogs: React.FC = () => {
                 </td>
 
                 <td className="py-3 px-3 font-mono text-cyan-300 text-[11px]">
-                  {log.targetEntity || 'sistema'}
+                  {log.targetType || 'sistema'}
                 </td>
 
                 <td className="py-3 px-3 text-slate-200">
