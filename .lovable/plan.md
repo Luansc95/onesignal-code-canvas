@@ -22,12 +22,26 @@ Tabelas no banco: `profiles`, `user_roles`, `projects`, `project_images`, `leads
 Papéis em tabela separada (`user_roles` + enum `admin | editor | commercial | marketing`) com função `has_role()` security definer — nunca no perfil.
 
 RLS por tabela:
-- Inserção pública (visitante anônimo): `leads`, `contacts`, `diagnostics`, `diagnostic_answers`, `analytics_events` — apenas INSERT, sem SELECT.
+- Inserção pública (visitante anônimo): `leads`, `contacts`, `diagnostics`, `diagnostic_answers`, `analytics_events` — apenas INSERT. Nenhuma política de SELECT para `anon`: usuário anônimo nunca lê Leads, Contatos, Diagnósticos ou Analytics.
 - Leitura pública: `projects` publicados e suas imagens.
-- Todo o restante: somente usuários autenticados com o papel adequado.
-- GRANTs explícitos por tabela em cada migração.
+- Todo o restante: somente usuários autenticados com o papel adequado, validado no banco via `has_role()` (RBAC no backend, não apenas no React).
+- GRANTs explícitos por tabela em cada migração; sem `GRANT SELECT` para `anon` nas tabelas administrativas.
+
+Campos adicionais no Lead para operação comercial: `assigned_to`, `next_follow_up_at`, `internal_notes`, `estimated_value`, `proposal_value`, `closed_value`, `revenue` (colunas preparadas, ainda sem UI obrigatória). Toda mudança de pipeline gera registro em `lead_activities`.
+
+Analytics com identificadores separados: `event_id` (PK), `visitor_id` (anônimo, persistente) e `session_id` (30 min de inatividade), permitindo distinguir visitantes únicos, sessões e page views. Cada evento persiste `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`, `referrer` e `landing_page`. O Lead guarda atribuição first-touch e last-touch.
 
 Storage: bucket público `project-images` (leitura pública, escrita restrita a admin/editor), com validação de tipo e tamanho no upload.
+
+## Regras de produção (hardening)
+
+- Sem cadastro público de administradores, senha temporária/padrão, usuário demo ou fallback de autenticação. Admins são criados por fluxo seguro no Supabase Auth e recebem papel via `user_roles`.
+- Nenhum dado fictício, seed ou número fallback em nenhuma etapa.
+- Antes de remover qualquer `localStorage`, exportar os dados atuais em JSON (backup baixável) e só limpar após confirmação de que a migração funcionou. Dados existentes não são excluídos antes disso.
+- Cliques de WhatsApp registrados no Analytics, com link contextual (mensagem pré-preenchida por origem/serviço).
+- Testes de autorização por papel (admin, editor, commercial, marketing e anônimo) contra o banco.
+- BI e dashboards só avançam depois que a captura e persistência de Leads reais estiver comprovada.
+
 
 ## Etapas de implementação
 
