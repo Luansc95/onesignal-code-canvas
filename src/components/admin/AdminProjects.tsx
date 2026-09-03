@@ -437,7 +437,7 @@ export const AdminProjects: React.FC = () => {
                 {/* Mockup Preview Thumbnail */}
                 <div className="h-36 rounded-2xl overflow-hidden bg-[#030D1A] border border-white/10 relative p-2 flex items-center justify-center">
                   <div className="scale-75 origin-center w-full pointer-events-none">
-                    <ProjectMockup type={project.imagePlaceholderType} title={project.name} accentColor={project.accentColor} />
+                    <ProjectMockup type={project.imagePlaceholderType} title={project.name} />
                   </div>
                   <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/60 backdrop-blur-md text-[10px] font-mono text-cyan-300 flex items-center gap-1">
                     <Eye className="w-3 h-3" />
