@@ -1,6 +1,3 @@
 project_id = "ccpqkxjgiojbkgooqmpn"
 [functions.admin-invite-user]
 verify_jwt = true
-
-[functions.bootstrap-first-admin]
-verify_jwt = false
