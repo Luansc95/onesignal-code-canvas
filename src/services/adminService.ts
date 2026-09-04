@@ -3,9 +3,8 @@
  * Manages Audit Logs, Notifications, Company Settings, and Marketing Campaigns.
  */
 
-import { AuditLog, NotificationItem, CompanySettings, MarketingCampaign, AdminUser } from '../types';
+import { AuditLog, NotificationItem, MarketingCampaign, AdminUser } from '../types';
 
-const SETTINGS_STORAGE_KEY = 'onesignal_admin_settings_v1';
 const NOTIFICATIONS_STORAGE_KEY = 'onesignal_admin_notifications_v1';
 const AUDIT_LOGS_STORAGE_KEY = 'onesignal_admin_audit_logs_v1';
 const CAMPAIGNS_STORAGE_KEY = 'onesignal_admin_campaigns_v1';
