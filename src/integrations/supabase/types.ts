@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_users_meta: {
+        Row: {
+          created_at: string
+          deactivated_at: string | null
+          id: string
+          invited_by: string | null
+          is_active: boolean
+          last_sign_in_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deactivated_at?: string | null
+          id: string
+          invited_by?: string | null
+          is_active?: boolean
+          last_sign_in_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deactivated_at?: string | null
+          id?: string
+          invited_by?: string | null
+          is_active?: boolean
+          last_sign_in_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       analytics_events: {
         Row: {
           created_at: string
@@ -646,6 +676,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_role_assignments: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          email: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          invited_by?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -830,6 +890,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_pending_role: {
+        Args: { _email: string; _role: Database["public"]["Enums"]["app_role"] }
+        Returns: undefined
+      }
+      audit_admin_action: {
+        Args: {
+          _action: string
+          _details: string
+          _metadata?: Json
+          _target_id: string
+          _target_type: string
+        }
+        Returns: undefined
+      }
       has_any_role: {
         Args: { _roles: Database["public"]["Enums"]["app_role"][] }
         Returns: boolean
@@ -842,6 +916,31 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      list_admin_users: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          last_sign_in_at: string
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
+      set_user_active: {
+        Args: { _active: boolean; _user_id: string }
+        Returns: undefined
+      }
+      set_user_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      touch_last_sign_in: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "editor" | "commercial" | "marketing"
