@@ -940,6 +940,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      storage_object_is_published: { Args: { _name: string }; Returns: boolean }
       touch_last_sign_in: { Args: never; Returns: undefined }
     }
     Enums: {
