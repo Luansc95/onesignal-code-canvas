@@ -67,51 +67,71 @@ class AuthService {
   }
 
   private async syncSession(): Promise<void> {
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
+    try {
+      if (!isSupabaseConfigured) {
+        this.currentUser = null;
+        this.loading = false;
+        this.emit();
+        return;
+      }
 
-    if (!user) {
+      const { data } = await supabase.auth.getUser();
+      const user = data.user;
+
+      if (!user) {
+        this.currentUser = null;
+        this.loading = false;
+        this.emit();
+        return;
+      }
+
+      const adminUser = await this.loadProfile(user.id, user.email || '');
+
+      if (!adminUser) {
+        // Sessão válida, mas sem papel atribuído ou acesso desativado.
+        this.currentUser = null;
+        this.loading = false;
+        this.emit();
+        await supabase.auth.signOut();
+        return;
+      }
+
+      this.currentUser = adminUser;
+      this.loading = false;
+      this.emit();
+    } catch (err) {
+      // Nunca propagar falha de autenticação: apenas trata como "sem sessão".
+      console.warn('[Auth] Falha ao sincronizar sessão:', err);
       this.currentUser = null;
       this.loading = false;
       this.emit();
-      return;
     }
-
-    const adminUser = await this.loadProfile(user.id, user.email || '');
-
-    if (!adminUser) {
-      // Sessão válida, mas sem papel atribuído ou acesso desativado.
-      this.currentUser = null;
-      this.loading = false;
-      this.emit();
-      await supabase.auth.signOut();
-      return;
-    }
-
-    this.currentUser = adminUser;
-    this.loading = false;
-    this.emit();
   }
 
   public async initialize(): Promise<void> {
     if (this.initialized) return;
     this.initialized = true;
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      // Evita chamadas assíncronas dentro do callback do Supabase.
-      setTimeout(() => {
-        if (!session) {
-          this.currentUser = null;
-          this.loading = false;
-          this.emit();
-          return;
-        }
-        void this.syncSession();
-      }, 0);
-    });
+    try {
+      supabase.auth.onAuthStateChange((_event, session) => {
+        // Evita chamadas assíncronas dentro do callback do Supabase.
+        setTimeout(() => {
+          if (!session) {
+            this.currentUser = null;
+            this.loading = false;
+            this.emit();
+            return;
+          }
+          void this.syncSession();
+        }, 0);
+      });
+    } catch (err) {
+      console.warn('[Auth] Não foi possível registrar o listener de sessão:', err);
+    }
 
     await this.syncSession();
   }
+
 
   public async signIn(email: string, password: string): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
     const cleanEmail = email.trim().toLowerCase();
