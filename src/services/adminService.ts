@@ -3,16 +3,13 @@
  * Manages Audit Logs, Notifications, Company Settings, and Marketing Campaigns.
  */
 
-import { AuditLog, NotificationItem, CompanySettings, MarketingCampaign, AdminUser } from '../types';
-import { COMMERCIAL_CONFIG } from '../config/commercialConfig';
+import { AuditLog, NotificationItem, MarketingCampaign, AdminUser } from '../types';
 
-const SETTINGS_STORAGE_KEY = 'onesignal_admin_settings_v1';
 const NOTIFICATIONS_STORAGE_KEY = 'onesignal_admin_notifications_v1';
 const AUDIT_LOGS_STORAGE_KEY = 'onesignal_admin_audit_logs_v1';
 const CAMPAIGNS_STORAGE_KEY = 'onesignal_admin_campaigns_v1';
 
 class AdminService {
-  private settings: CompanySettings | null = null;
   private notifications: NotificationItem[] = [];
   private auditLogs: AuditLog[] = [];
   private campaigns: MarketingCampaign[] = [];
@@ -25,17 +22,13 @@ class AdminService {
   private init(): void {
     if (this.isInitialized) return;
     if (typeof window === 'undefined') {
-      this.settings = this.getDefaultSettings();
-      this.notifications = this.getSeedNotifications();
+        this.notifications = this.getSeedNotifications();
       this.auditLogs = this.getSeedAuditLogs();
       this.campaigns = this.getSeedCampaigns();
       return;
     }
 
     try {
-      const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      this.settings = storedSettings ? JSON.parse(storedSettings) : this.getDefaultSettings();
-
       const storedNotifs = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
       this.notifications = storedNotifs ? JSON.parse(storedNotifs) : this.getSeedNotifications();
 
@@ -45,36 +38,11 @@ class AdminService {
       const storedCampaigns = localStorage.getItem(CAMPAIGNS_STORAGE_KEY);
       this.campaigns = storedCampaigns ? JSON.parse(storedCampaigns) : this.getSeedCampaigns();
     } catch {
-      this.settings = this.getDefaultSettings();
-      this.notifications = this.getSeedNotifications();
+        this.notifications = this.getSeedNotifications();
       this.auditLogs = this.getSeedAuditLogs();
       this.campaigns = this.getSeedCampaigns();
     }
     this.isInitialized = true;
-  }
-
-  // --- SETTINGS ---
-  public getSettings(): CompanySettings {
-    this.init();
-    return this.settings || this.getDefaultSettings();
-  }
-
-  public updateSettings(newSettings: Partial<CompanySettings>, author?: AdminUser): CompanySettings {
-    this.init();
-    this.settings = {
-      ...(this.settings || this.getDefaultSettings()),
-      ...newSettings
-    };
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(this.settings));
-    }
-
-    if (author) {
-      this.logAction(author, 'Atualizou configurações gerais da empresa', 'settings', undefined, 'Alteração de contatos ou metadados de SEO');
-    }
-
-    return this.settings;
   }
 
   // --- NOTIFICATIONS ---
@@ -209,28 +177,6 @@ class AdminService {
   }
 
   // --- SEEDS & DEFAULTS ---
-  private getDefaultSettings(): CompanySettings {
-    return {
-      companyName: COMMERCIAL_CONFIG.companyName,
-      tradingName: COMMERCIAL_CONFIG.tradingName,
-      cnpj: '00.000.000/0001-00',
-      commercialEmail: COMMERCIAL_CONFIG.commercialEmail,
-      supportEmail: COMMERCIAL_CONFIG.supportEmail,
-      phoneDisplay: COMMERCIAL_CONFIG.phoneDisplay,
-      rawWhatsappNumber: COMMERCIAL_CONFIG.rawWhatsappNumber,
-      addressDisplay: `${COMMERCIAL_CONFIG.address.street}, ${COMMERCIAL_CONFIG.address.city} - ${COMMERCIAL_CONFIG.address.state}`,
-      businessHours: COMMERCIAL_CONFIG.businessHours,
-      instagram: COMMERCIAL_CONFIG.social.instagram,
-      linkedin: COMMERCIAL_CONFIG.social.linkedin,
-      youtube: '',
-      github: COMMERCIAL_CONFIG.social.github || '',
-      seoTitle: 'OneSignal | Soluções Tecnológicas Sob Medida & Sistemas Web',
-      seoDescription: 'Desenvolvimento de sistemas web, aplicativos móveis, automação e inteligência artificial para médias e grandes empresas.',
-      notifyOnNewLead: true,
-      notifyOnDiagnostic: true
-    };
-  }
-
   private getSeedNotifications(): NotificationItem[] {
     return [
       {

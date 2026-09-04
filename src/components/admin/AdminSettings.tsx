@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Settings, 
   Building, 
@@ -16,21 +16,73 @@ import {
   ShieldCheck,
   X
 } from 'lucide-react';
-import { adminService } from '../../services/adminService';
-import { authService } from '../../services/authService';
+import {
+  companySettingsService,
+  diffSettings
+} from '../../services/companySettingsService';
+import { supabase } from '../../integrations/supabase/client';
 import { CompanySettings } from '../../types';
 
 export const AdminSettings: React.FC = () => {
-  const [settings, setSettings] = useState<CompanySettings>(() => adminService.getSettings());
+  const [settings, setSettings] = useState<CompanySettings>(() => companySettingsService.getSettings());
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [updatedAt, setUpdatedAt] = useState<string | undefined>(undefined);
 
-  const currentUser = authService.getCurrentUser();
+  useEffect(() => {
+    let active = true;
+    void companySettingsService.refresh().then((state) => {
+      if (!active) return;
+      setSettings(state.settings);
+      setUpdatedAt(state.updatedAt);
+      setLoadError(state.status === 'error' ? state.error : null);
+      setIsLoading(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    adminService.updateSettings(settings, currentUser || undefined);
-    setFeedback('Configurações institucionais e de canais salvas com sucesso!');
-    setTimeout(() => setFeedback(null), 4000);
+    if (isSaving) return;
+
+    setIsSaving(true);
+    setSaveError(null);
+    setFeedback(null);
+
+    const before = companySettingsService.getSettings();
+
+    try {
+      const saved = await companySettingsService.save(settings);
+      const changes = diffSettings(before, saved);
+
+      setSettings(saved);
+      setUpdatedAt(companySettingsService.getSnapshot().updatedAt);
+      setFeedback('Configurações institucionais e de canais salvas com sucesso!');
+      setTimeout(() => setFeedback(null), 4000);
+
+      if (changes.length > 0) {
+        await supabase.rpc('audit_admin_action', {
+          _action: 'settings_updated',
+          _target_type: 'settings',
+          _target_id: 'company_settings',
+          _details: `Campos alterados: ${changes.map((c) => c.field).join(', ')}`,
+          _metadata: { changes } as never
+        });
+      }
+    } catch (err) {
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : 'Não foi possível salvar as configurações. Tente novamente.'
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -49,6 +101,12 @@ export const AdminSettings: React.FC = () => {
         </div>
       )}
 
+      {(loadError || saveError) && (
+        <div className="p-3.5 rounded-2xl bg-rose-950/60 border border-rose-500/40 text-rose-200 text-xs font-semibold flex items-center gap-2 shadow-xl">
+          <span>{saveError || `Não foi possível carregar as configurações: ${loadError}`}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-white/10">
         <div>
@@ -58,6 +116,13 @@ export const AdminSettings: React.FC = () => {
           <p className="text-xs text-slate-400 mt-1">
             Gestão dos dados cadastrais da empresa, canais de contato, Instagram oficial (@onesignal_tech) e metas de SEO.
           </p>
+          {isLoading ? (
+            <p className="text-[11px] text-slate-500 mt-1">Carregando configurações do banco...</p>
+          ) : updatedAt ? (
+            <p className="text-[11px] text-slate-500 mt-1">
+              Última atualização: {new Date(updatedAt).toLocaleString('pt-BR')}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -280,10 +345,12 @@ export const AdminSettings: React.FC = () => {
         <div className="flex justify-end pt-4">
           <button
             type="submit"
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-sky-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/25 hover:opacity-95 transition-all flex items-center gap-2 cursor-pointer"
+            disabled={isSaving || isLoading}
+            className={`px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-sky-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/25 hover:opacity-95 transition-all flex items-center gap-2 ${isSaving || isLoading ? 'opacity-60 pointer-events-none' : 'cursor-pointer'}`}
           >
             <Save className="w-4 h-4" />
-            <span>Salvar Configurações</span>
+            <span>{isSaving ? 'Salvando...' : 'Salvar Configurações'}</span>
+
           </button>
         </div>
 

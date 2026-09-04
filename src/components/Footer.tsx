@@ -10,7 +10,7 @@ import {
   Heart,
   Code2
 } from 'lucide-react';
-import { COMMERCIAL_CONFIG } from '../config/commercialConfig';
+import { useCompanySettings } from '../hooks/useCompanySettings';
 import { analytics } from '../services/analyticsService';
 
 interface FooterProps {
@@ -19,6 +19,8 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ onOpenBudgetModal, onOpenPrivacyPolicy }) => {
+  const { settings } = useCompanySettings();
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -46,26 +48,30 @@ export const Footer: React.FC<FooterProps> = ({ onOpenBudgetModal, onOpenPrivacy
             </p>
 
             <div className="flex items-center gap-3 pt-2">
+              {settings.linkedin && (
+                <a 
+                  href={settings.linkedin} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-[#22D3EE] border border-white/15 flex items-center justify-center transition-colors backdrop-blur-sm"
+                  aria-label="LinkedIn"
+                >
+                  <Linkedin className="w-4 h-4" />
+                </a>
+              )}
+              {settings.instagram && (
+                <a 
+                  href={settings.instagram} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-[#22D3EE] border border-white/15 flex items-center justify-center transition-colors backdrop-blur-sm"
+                  aria-label="Instagram"
+                >
+                  <Instagram className="w-4 h-4" />
+                </a>
+              )}
               <a 
-                href={COMMERCIAL_CONFIG.social.linkedin} 
-                target="_blank" 
-                rel="noreferrer"
-                className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-[#22D3EE] border border-white/15 flex items-center justify-center transition-colors backdrop-blur-sm"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-4 h-4" />
-              </a>
-              <a 
-                href={COMMERCIAL_CONFIG.social.instagram} 
-                target="_blank" 
-                rel="noreferrer"
-                className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-[#22D3EE] border border-white/15 flex items-center justify-center transition-colors backdrop-blur-sm"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a 
-                href={`mailto:${COMMERCIAL_CONFIG.commercialEmail}`} 
+                href={`mailto:${settings.commercialEmail}`} 
                 className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-[#22D3EE] border border-white/15 flex items-center justify-center transition-colors backdrop-blur-sm"
                 aria-label="Email"
               >
@@ -160,7 +166,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenBudgetModal, onOpenPrivacy
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
           <div className="text-slate-400">
-            © {new Date().getFullYear()} OneSignal Soluções Tecnológicas. Todos os direitos reservados.
+            © {new Date().getFullYear()} {settings.tradingName}. Todos os direitos reservados.
           </div>
 
           <div className="flex items-center gap-4 text-slate-400">

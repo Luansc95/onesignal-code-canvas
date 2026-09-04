@@ -3,6 +3,7 @@ import { X, Sparkles, Send, CheckCircle2, ShieldCheck, Clock, MessageSquare, Arr
 import { ContactFormData } from '../types';
 import { leadService } from '../services/leadService';
 import { getWhatsAppUrl } from '../config/commercialConfig';
+import { useCompanySettings } from '../hooks/useCompanySettings';
 import { analytics } from '../services/analyticsService';
 
 interface BudgetModalProps {
@@ -32,6 +33,9 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
     description: initialDescription || '',
     lgpdConsent: true
   });
+
+  const { settings } = useCompanySettings();
+  const hasWhatsapp = Boolean(settings.rawWhatsappNumber);
 
   const [formStarted, setFormStarted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -145,6 +149,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
               Recebemos sua solicitação para <strong className="text-[#22D3EE]">{formData.solutionType}</strong>. Nossa equipe técnica entrará em contato pelo WhatsApp <strong className="text-white">{formData.whatsapp}</strong> ou e-mail.
             </p>
             <div className="pt-4 flex flex-col sm:flex-row justify-center gap-3">
+{hasWhatsapp && (
               <button
                 id="modal-success-whatsapp-btn"
                 onClick={() => {
@@ -154,7 +159,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
                     companyName: formData.company,
                     serviceTitle: formData.solutionType
                   });
-                  window.open(url, '_blank');
+                  if (url) window.open(url, '_blank');
                   onClose();
                 }}
                 className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg"
@@ -162,6 +167,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
                 <MessageSquare className="w-4 h-4" />
                 Continuar no WhatsApp
               </button>
+              )}
               <button
                 onClick={onClose}
                 className="px-6 py-3 rounded-xl bg-white/10 text-slate-300 hover:text-white text-xs sm:text-sm border border-white/15"

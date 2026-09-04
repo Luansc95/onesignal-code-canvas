@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { DiagnosticResultData, ContactFormData, DigitalMaturityLevel } from '../../types';
 import { getWhatsAppUrl } from '../../config/commercialConfig';
+import { useCompanySettings } from '../../hooks/useCompanySettings';
 import { analytics } from '../../services/analyticsService';
 import { leadService } from '../../services/leadService';
 
@@ -119,13 +120,16 @@ export const DiagnosticResult: React.FC<DiagnosticResultProps> = ({
     }
   };
 
+  const { settings } = useCompanySettings();
+  const hasWhatsapp = Boolean(settings.rawWhatsappNumber);
+
   const handleWhatsAppChat = () => {
     analytics.track('click_whatsapp', { source: 'diagnostic_result' });
     const url = getWhatsAppUrl('diagnostic_result', {
       digitalMaturity: result.maturityLevel,
       topSolution: result.recommendedSolutions[0]?.title
     });
-    window.open(url, '_blank');
+    if (url) window.open(url, '_blank');
   };
 
   const getOpportunityIcon = (iconName: string) => {
@@ -348,6 +352,7 @@ export const DiagnosticResult: React.FC<DiagnosticResultProps> = ({
               </p>
             </div>
             <div className="pt-2 flex justify-center">
+{hasWhatsapp && (
               <button
                 type="button"
                 onClick={handleWhatsAppChat}
@@ -356,6 +361,7 @@ export const DiagnosticResult: React.FC<DiagnosticResultProps> = ({
                 <MessageSquare className="w-4 h-4" />
                 <span>Iniciar conversa agora no WhatsApp</span>
               </button>
+              )}
             </div>
           </div>
         ) : (
@@ -499,6 +505,7 @@ export const DiagnosticResult: React.FC<DiagnosticResultProps> = ({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
+{hasWhatsapp && (
           <button
             type="button"
             id="diagnostic-direct-whatsapp-btn"
@@ -508,6 +515,7 @@ export const DiagnosticResult: React.FC<DiagnosticResultProps> = ({
             <MessageSquare className="w-4 h-4" />
             <span>Falar com Especialista no WhatsApp</span>
           </button>
+          )}
           <button
             type="button"
             onClick={onExploreServices}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, ShieldCheck, Lock, FileText, CheckCircle2, Building, Mail } from 'lucide-react';
-import { COMMERCIAL_CONFIG } from '../config/commercialConfig';
+import { useCompanySettings } from '../hooks/useCompanySettings';
 
 interface PrivacyPolicyModalProps {
   isOpen: boolean;
@@ -8,6 +8,8 @@ interface PrivacyPolicyModalProps {
 }
 
 export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isOpen, onClose }) => {
+  const { settings } = useCompanySettings();
+
   if (!isOpen) return null;
 
   return (
@@ -32,7 +34,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isOpen, 
                 Política de Privacidade & LGPD
               </h3>
               <p className="text-xs text-slate-300">
-                {COMMERCIAL_CONFIG.companyName} • Atualizado em 2025
+                {settings.companyName} • Atualizado em 2025
               </p>
             </div>
           </div>
@@ -56,7 +58,7 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isOpen, 
               1. Compromisso com a Proteção de Dados
             </h4>
             <p>
-              A <strong>{COMMERCIAL_CONFIG.companyName}</strong> atua em estrita conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018 - LGPD). Valorizamos a confidencialidade e a segurança das informações fornecidas por visitantes, parceiros e clientes.
+              A <strong>{settings.companyName}</strong> atua em estrita conformidade com a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018 - LGPD). Valorizamos a confidencialidade e a segurança das informações fornecidas por visitantes, parceiros e clientes.
             </p>
           </div>
 
@@ -97,11 +99,11 @@ export const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isOpen, 
             <span className="font-bold text-[#22D3EE] block">Canal de Contato do Encarregado de Dados (DPO):</span>
             <div className="flex items-center gap-2 text-slate-200">
               <Mail className="w-4 h-4 text-[#2DD4BF]" />
-              <span>{COMMERCIAL_CONFIG.commercialEmail}</span>
+              <span>{settings.commercialEmail}</span>
             </div>
             <div className="flex items-center gap-2 text-slate-200">
               <Building className="w-4 h-4 text-[#22D3EE]" />
-              <span>{COMMERCIAL_CONFIG.address.street}, {COMMERCIAL_CONFIG.address.city} - {COMMERCIAL_CONFIG.address.state}</span>
+              <span>{settings.addressDisplay}</span>
             </div>
           </div>
 

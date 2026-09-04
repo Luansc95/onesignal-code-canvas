@@ -1,7 +1,13 @@
 /**
- * Centralized Commercial & Contact Configuration for OneSignal
- * All commercial parameters, channels, links, and contextual WhatsApp copy are configured here.
+ * Constantes de aplicação da OneSignal.
+ * ATENÇÃO: dados administráveis (telefone, WhatsApp, e-mail, endereço, horário,
+ * redes sociais, SEO) NÃO moram mais aqui — a fonte de verdade é a tabela
+ * `company_settings`, acessada via `companySettingsService`.
+ * Os valores abaixo servem apenas como fallback seguro de tipagem/build.
  */
+
+import { companySettingsService } from '../services/companySettingsService';
+
 
 export interface CommercialConfig {
   companyName: string;
@@ -29,18 +35,19 @@ export const COMMERCIAL_CONFIG: CommercialConfig = {
   tradingName: 'OneSignal Soluções Tecnológicas Ltda',
   commercialEmail: 'onesignal@outlook.com.br',
   supportEmail: 'onesignal@outlook.com.br',
-  phoneDisplay: '(11) 99999-9999',
-  rawWhatsappNumber: '5511999999999', // Placeholder clearly defined for easy configuration
+  phoneDisplay: '',
+  rawWhatsappNumber: '',
   address: {
-    street: 'Av. Paulista, 1106 - Bela Vista',
-    city: 'São Paulo',
-    state: 'SP',
+    street: 'Rua Moreira dos Santos, 52 - Centro',
+    city: 'Barra do Piraí',
+    state: 'RJ',
     country: 'Brasil'
   },
   businessHours: 'Segunda a Sexta: 08:30 às 18:30 (Sistemas em Nuvem 24/7)',
   social: {
-    linkedin: 'https://linkedin.com',
+    linkedin: '',
     instagram: 'https://www.instagram.com/onesignal_tech/'
+
   }
 };
 
@@ -65,13 +72,17 @@ export interface WhatsAppContextDetails {
 }
 
 /**
- * Generates contextual WhatsApp redirection URLs with professional prefilled copy
+ * Generates contextual WhatsApp redirection URLs with professional prefilled copy.
+ * O número vem SEMPRE das configurações persistentes (company_settings).
+ * Retorna null quando o número ainda não foi configurado — nesse caso o canal
+ * deve ser ocultado no site.
  */
 export function getWhatsAppUrl(
   context: WhatsAppContext = 'general',
   details?: WhatsAppContextDetails
-): string {
+): string | null {
   let message = 'Olá OneSignal! Gostaria de conversar sobre uma solução tecnológica para minha empresa.';
+
 
   switch (context) {
     case 'consultative':
@@ -119,8 +130,11 @@ export function getWhatsAppUrl(
   }
 
   const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/${COMMERCIAL_CONFIG.rawWhatsappNumber}?text=${encodedMessage}`;
+  const rawNumber = (companySettingsService.getSettings().rawWhatsappNumber || '').replace(/\D/g, '');
+  if (!rawNumber) return null;
+  return `https://wa.me/${rawNumber}?text=${encodedMessage}`;
 }
+
 
 /**
  * Extracts UTM parameters from the current URL if available
@@ -140,4 +154,17 @@ export function getUtmParameters(): {
     utmCampaign: urlParams.get('utm_campaign') || undefined,
     referrer: document.referrer || undefined
   };
+}
+
+/** Indica se o canal WhatsApp está configurado (número salvo em company_settings). */
+export function isWhatsAppConfigured(): boolean {
+  return Boolean((companySettingsService.getSettings().rawWhatsappNumber || '').replace(/\D/g, ''));
+}
+
+/** Abre o WhatsApp quando configurado. Retorna false quando o canal está indisponível. */
+export function openWhatsApp(context: WhatsAppContext = 'general', details?: WhatsAppContextDetails): boolean {
+  const url = getWhatsAppUrl(context, details);
+  if (!url) return false;
+  window.open(url, '_blank');
+  return true;
 }

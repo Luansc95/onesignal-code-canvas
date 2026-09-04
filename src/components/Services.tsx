@@ -15,7 +15,6 @@ import {
 import { SERVICES_DATA } from '../data/servicesData';
 import { ServiceItem } from '../types';
 import { analytics } from '../services/analyticsService';
-import { getWhatsAppUrl } from '../config/commercialConfig';
 
 interface ServicesProps {
   onSelectServiceForBudget: (serviceTitle: string) => void;

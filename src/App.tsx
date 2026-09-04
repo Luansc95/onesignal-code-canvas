@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TechBackground } from './components/TechBackground';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -20,6 +20,7 @@ import { Project } from './types';
 import { analytics } from './services/analyticsService';
 import { useRouter } from './lib/router';
 import { useAuth } from './hooks/useAuth';
+import { useCompanySettings } from './hooks/useCompanySettings';
 
 // Admin Components
 import { AdminLayout } from './components/admin/AdminLayout';
@@ -94,6 +95,23 @@ function AdminArea({ currentPath }: { currentPath: string }) {
 
 export default function App() {
   const { path: currentPath } = useRouter();
+  const { settings } = useCompanySettings();
+
+  // SEO padrão vindo das Configurações Institucionais (títulos próprios de páginas prevalecem)
+  useEffect(() => {
+    if (currentPath.startsWith('/admin')) return;
+    if (settings.seoTitle) document.title = settings.seoTitle;
+    if (settings.seoDescription) {
+      let tag = document.querySelector('meta[name="description"]');
+      if (!tag) {
+        tag = document.createElement('meta');
+        tag.setAttribute('name', 'description');
+        document.head.appendChild(tag);
+      }
+      tag.setAttribute('content', settings.seoDescription);
+    }
+  }, [currentPath, settings.seoTitle, settings.seoDescription]);
+
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);

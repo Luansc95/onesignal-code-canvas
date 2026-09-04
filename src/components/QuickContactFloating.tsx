@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, Sparkles, X } from 'lucide-react';
 import { getWhatsAppUrl } from '../config/commercialConfig';
+import { useCompanySettings } from '../hooks/useCompanySettings';
 import { analytics } from '../services/analyticsService';
 
 interface QuickContactFloatingProps {
@@ -9,6 +10,8 @@ interface QuickContactFloatingProps {
 
 export const QuickContactFloating: React.FC<QuickContactFloatingProps> = ({ onOpenBudgetModal }) => {
   const [showNotification, setShowNotification] = useState(false);
+  const { settings } = useCompanySettings();
+  const hasWhatsapp = Boolean(settings.rawWhatsappNumber);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -20,7 +23,7 @@ export const QuickContactFloating: React.FC<QuickContactFloatingProps> = ({ onOp
   const handleWhatsApp = () => {
     analytics.track('click_whatsapp', { source: 'floating_button' });
     const url = getWhatsAppUrl('general');
-    window.open(url, '_blank');
+    if (url) window.open(url, '_blank');
   };
 
   const handleBudgetClick = () => {
@@ -64,6 +67,7 @@ export const QuickContactFloating: React.FC<QuickContactFloatingProps> = ({ onOp
           Solicitar Orçamento
         </button>
 
+{hasWhatsapp && (
         <button
           id="floating-whatsapp-btn"
           onClick={handleWhatsApp}
@@ -75,6 +79,7 @@ export const QuickContactFloating: React.FC<QuickContactFloatingProps> = ({ onOp
             Falar no WhatsApp
           </span>
         </button>
+        )}
       </div>
 
     </div>

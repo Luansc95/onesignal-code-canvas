@@ -2,6 +2,7 @@ import React, { useState, useId } from 'react';
 import { Calculator, Clock, Users, Zap, ArrowRight, MessageSquare, Sparkles, HelpCircle } from 'lucide-react';
 import { analytics } from '../../services/analyticsService';
 import { getWhatsAppUrl } from '../../config/commercialConfig';
+import { useCompanySettings } from '../../hooks/useCompanySettings';
 
 interface AutomationCalculatorProps {
   onStartDiagnosis?: () => void;
@@ -43,11 +44,14 @@ export const AutomationCalculator: React.FC<AutomationCalculatorProps> = ({
     });
   };
 
+  const { settings } = useCompanySettings();
+  const hasWhatsapp = Boolean(settings.rawWhatsappNumber);
+
   const handleWhatsApp = () => {
     analytics.track('click_whatsapp', { source: 'automation_calculator' });
     const message = `Olá OneSignal! Simulei na Calculadora de Oportunidade do site: nossa equipe gasta aproximadamente ${totalMonthlyHours}h/mês em rotinas repetitivas. Gostaria de avaliar automações para otimizar esse tempo.`;
     const url = getWhatsAppUrl('general', { customMessage: message });
-    window.open(url, '_blank');
+    if (url) window.open(url, '_blank');
   };
 
   return (
@@ -244,6 +248,7 @@ export const AutomationCalculator: React.FC<AutomationCalculatorProps> = ({
               </button>
             )}
 
+{hasWhatsapp && (
             <button
               type="button"
               onClick={handleWhatsApp}
@@ -252,6 +257,7 @@ export const AutomationCalculator: React.FC<AutomationCalculatorProps> = ({
               <MessageSquare className="w-4 h-4 text-emerald-400" />
               <span>Avaliar Oportunidades no WhatsApp</span>
             </button>
+            )}
           </div>
         </div>
       </div>

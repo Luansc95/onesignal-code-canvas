@@ -17,6 +17,7 @@ import { Project } from '../types';
 import { ProjectMockup } from './ProjectMockup';
 import { analytics } from '../services/analyticsService';
 import { getWhatsAppUrl } from '../config/commercialConfig';
+import { useCompanySettings } from '../hooks/useCompanySettings';
 
 interface ProjectModalProps {
   project: Project | null;
@@ -29,12 +30,16 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   onClose, 
   onSimilarProjectQuote 
 }) => {
+  const { settings } = useCompanySettings();
+  const hasWhatsapp = Boolean(settings.rawWhatsappNumber);
+
   if (!project) return null;
+
 
   const handleWhatsAppCase = () => {
     analytics.track('click_whatsapp', { source: 'project_modal', projectName: project.name });
     const url = getWhatsAppUrl('project_case', { projectName: project.name });
-    window.open(url, '_blank');
+    if (url) window.open(url, '_blank');
   };
 
   const handleSimilarProject = () => {
@@ -207,6 +212,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 w-full md:w-auto shrink-0">
+{hasWhatsapp && (
             <button
               id="modal-whatsapp-case-btn"
               onClick={handleWhatsAppCase}
@@ -214,6 +220,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
             >
               <span>Tirar dúvidas no WhatsApp</span>
             </button>
+            )}
             
             <button
               id="modal-similar-project-btn"
