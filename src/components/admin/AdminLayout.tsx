@@ -17,7 +17,7 @@ import {
   X, 
   ChevronRight, 
   ShieldCheck, 
-  Check, 
+
   Sparkles,
   Search,
   UserCheck
@@ -25,7 +25,8 @@ import {
 import { authService } from '../../services/authService';
 import { adminService } from '../../services/adminService';
 import { leadService } from '../../services/leadService';
-import { AdminRole, AdminUser } from '../../types';
+
+import { useAuth } from '../../hooks/useAuth';
 import { navigate } from '../../lib/router';
 
 interface AdminLayoutProps {
@@ -38,7 +39,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ currentPath, children 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  const currentUser = authService.getCurrentUser();
+  const { user: currentUser } = useAuth();
   const unreadNotifsCount = adminService.getUnreadNotificationsCount();
   const notifications = adminService.getNotifications();
   const leads = leadService.getAllLeads();
@@ -111,6 +112,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ currentPath, children 
       roles: ['admin']
     },
     {
+      id: 'usuarios',
+      label: 'Usuários & Permissões',
+      path: '/admin/usuarios',
+      icon: UserCheck,
+      roles: ['admin']
+    },
+    {
       id: 'logs',
       label: 'Logs & Auditoria',
       path: '/admin/logs',
@@ -119,18 +127,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ currentPath, children 
     }
   ];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (currentUser) {
       adminService.logAction(currentUser, 'Logout do painel', 'auth', undefined, 'Sessão encerrada pelo usuário.');
     }
-    authService.logout();
+    await authService.signOut();
     navigate('/admin/login');
-  };
-
-  const handleSwitchRole = (role: AdminRole) => {
-    authService.loginAsDemoRole(role);
-    setIsUserMenuOpen(false);
-    navigate(currentPath);
   };
 
   // Find active navigation item
@@ -286,32 +288,24 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ currentPath, children 
               <ChevronRight className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
             </button>
 
-            {/* Role Switcher & Logout Dropdown */}
+            {/* Menu do Usuário */}
             {isUserMenuOpen && (
               <div className="absolute bottom-full left-0 w-full mb-2 p-2 rounded-2xl bg-[#071B3A] border border-cyan-500/30 shadow-2xl space-y-1 z-50 animate-fade-in backdrop-blur-xl">
                 <div className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider text-slate-400 border-b border-white/10 mb-1">
-                  Trocar Perfil de Demonstração (RBAC)
+                  {currentUser?.email}
                 </div>
-                {(['admin', 'editor', 'commercial', 'marketing'] as AdminRole[]).map((r) => (
+                {currentUser?.role === 'admin' && (
                   <button
-                    key={r}
-                    onClick={() => handleSwitchRole(r)}
-                    className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs flex items-center justify-between transition-colors ${
-                      currentUser?.role === r 
-                        ? 'bg-cyan-500/20 text-cyan-300 font-semibold' 
-                        : 'text-slate-300 hover:bg-white/5'
-                    }`}
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      navigate('/admin/usuarios');
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-slate-300 hover:bg-white/5 flex items-center gap-2 transition-colors"
                   >
-                    <span>
-                      {r === 'admin' && '👑 Administrador (Geral)'}
-                      {r === 'editor' && '✏️ Editor (Projetos)'}
-                      {r === 'commercial' && '💼 Comercial (Leads/CRM)'}
-                      {r === 'marketing' && '📊 Marketing (Analytics/BI)'}
-                    </span>
-                    {currentUser?.role === r && <Check className="w-3.5 h-3.5 text-cyan-400" />}
+                    <UserCheck className="w-3.5 h-3.5 text-cyan-400" />
+                    Usuários & Permissões
                   </button>
-                ))}
-
+                )}
                 <div className="border-t border-white/10 pt-1 mt-1">
                   <button
                     onClick={handleLogout}
@@ -452,14 +446,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ currentPath, children 
               </div>
               <h2 className="text-xl font-bold text-white font-['Outfit']">Acesso Restrito ao Módulo</h2>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Seu perfil atual (<span className="font-mono text-cyan-300">{currentUser?.roleLabel}</span>) não possui permissão para acessar esta seção. Alterne para o perfil de <span className="text-cyan-300 font-semibold">Administrador</span> no menu lateral ou solicite autorização.
+                Seu perfil atual (<span className="font-mono text-cyan-300">{currentUser?.roleLabel}</span>) não possui permissão para acessar esta seção. Solicite autorização a um administrador.
               </p>
-              <button
-                onClick={() => handleSwitchRole('admin')}
-                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/20"
-              >
-                Alternar para Administrador Geral 👑
-              </button>
             </div>
           )}
         </main>

@@ -19,11 +19,12 @@ import { PrivacyPolicyModal } from './components/PrivacyPolicyModal';
 import { Project } from './types';
 import { analytics } from './services/analyticsService';
 import { useRouter } from './lib/router';
-import { authService } from './services/authService';
+import { useAuth } from './hooks/useAuth';
 
 // Admin Components
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminLogin } from './components/admin/AdminLogin';
+import { AdminResetPassword } from './components/admin/AdminResetPassword';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminProjects } from './components/admin/AdminProjects';
 import { AdminLeads } from './components/admin/AdminLeads';
@@ -34,6 +35,60 @@ import { AdminMarketing } from './components/admin/AdminMarketing';
 import { AdminAnalytics } from './components/admin/AdminAnalytics';
 import { AdminSettings } from './components/admin/AdminSettings';
 import { AdminAuditLogs } from './components/admin/AdminAuditLogs';
+import { AdminUsers } from './components/admin/AdminUsers';
+
+function AdminArea({ currentPath }: { currentPath: string }) {
+  const { user, isLoading } = useAuth();
+
+  if (currentPath === '/admin/redefinir-senha') {
+    return <AdminResetPassword />;
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#030D1A] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user || currentPath === '/admin/login') {
+    return <AdminLogin />;
+  }
+
+  const renderAdminContent = () => {
+    switch (currentPath) {
+      case '/admin':
+      case '/admin/dashboard':
+        return <AdminDashboard />;
+      case '/admin/projetos':
+        return <AdminProjects />;
+      case '/admin/leads':
+        return <AdminLeads />;
+      case '/admin/lead-scoring':
+        return <AdminLeadScoring />;
+      case '/admin/contatos':
+        return <AdminContacts />;
+      case '/admin/diagnosticos':
+        return <AdminDiagnostics />;
+      case '/admin/marketing':
+        return <AdminMarketing />;
+      case '/admin/analytics':
+        return <AdminAnalytics />;
+      case '/admin/configuracoes':
+        return <AdminSettings />;
+      case '/admin/usuarios':
+        return <AdminUsers />;
+      case '/admin/logs':
+        return <AdminAuditLogs />;
+      default:
+        return <AdminDashboard />;
+    }
+  };
+
+  return <AdminLayout currentPath={currentPath}>{renderAdminContent()}</AdminLayout>;
+}
+
 
 export default function App() {
   const { path: currentPath } = useRouter();
@@ -51,46 +106,10 @@ export default function App() {
   // ADMIN PLATFORM ROUTING
   // ==========================================
   if (currentPath.startsWith('/admin')) {
-    const isAuthenticated = authService.isAuthenticated();
-
-    if (currentPath === '/admin/login' || !isAuthenticated) {
-      return <AdminLogin />;
-    }
-
-    const renderAdminContent = () => {
-      switch (currentPath) {
-        case '/admin':
-        case '/admin/dashboard':
-          return <AdminDashboard />;
-        case '/admin/projects':
-          return <AdminProjects />;
-        case '/admin/leads':
-          return <AdminLeads />;
-        case '/admin/leads/scoring':
-          return <AdminLeadScoring />;
-        case '/admin/contacts':
-          return <AdminContacts />;
-        case '/admin/diagnostics':
-          return <AdminDiagnostics />;
-        case '/admin/marketing':
-          return <AdminMarketing />;
-        case '/admin/analytics':
-          return <AdminAnalytics />;
-        case '/admin/settings':
-          return <AdminSettings />;
-        case '/admin/logs':
-          return <AdminAuditLogs />;
-        default:
-          return <AdminDashboard />;
-      }
-    };
-
-    return (
-      <AdminLayout currentPath={currentPath}>
-        {renderAdminContent()}
-      </AdminLayout>
-    );
+    return <AdminArea currentPath={currentPath} />;
   }
+
+
 
   // ==========================================
   // PUBLIC WEBSITE (EXISTING SITE UNCHANGED)
