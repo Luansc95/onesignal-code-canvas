@@ -65,13 +65,17 @@ export interface WhatsAppContextDetails {
 }
 
 /**
- * Generates contextual WhatsApp redirection URLs with professional prefilled copy
+ * Generates contextual WhatsApp redirection URLs with professional prefilled copy.
+ * O número vem SEMPRE das configurações persistentes (company_settings).
+ * Retorna null quando o número ainda não foi configurado — nesse caso o canal
+ * deve ser ocultado no site.
  */
 export function getWhatsAppUrl(
   context: WhatsAppContext = 'general',
   details?: WhatsAppContextDetails
-): string {
+): string | null {
   let message = 'Olá OneSignal! Gostaria de conversar sobre uma solução tecnológica para minha empresa.';
+
 
   switch (context) {
     case 'consultative':
