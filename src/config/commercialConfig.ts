@@ -123,8 +123,11 @@ export function getWhatsAppUrl(
   }
 
   const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/${COMMERCIAL_CONFIG.rawWhatsappNumber}?text=${encodedMessage}`;
+  const rawNumber = (companySettingsService.getSettings().rawWhatsappNumber || '').replace(/\D/g, '');
+  if (!rawNumber) return null;
+  return `https://wa.me/${rawNumber}?text=${encodedMessage}`;
 }
+
 
 /**
  * Extracts UTM parameters from the current URL if available
