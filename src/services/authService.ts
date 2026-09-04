@@ -135,15 +135,39 @@ class AuthService {
 
   public async signIn(email: string, password: string): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
     if (!isSupabaseConfigured) {
-      return { success: false, error: 'Serviço de autenticação indisponível no momento.' };
+      return {
+        success: false,
+        error: 'Configuração de autenticação ausente neste ambiente. Contate o responsável técnico.'
+      };
     }
 
     const cleanEmail = email.trim().toLowerCase();
 
+    let data;
+    let error;
+    try {
+      const res = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+      data = res.data;
+      error = res.error;
+    } catch {
+      return {
+        success: false,
+        error: 'Não foi possível conectar ao serviço de autenticação. Verifique sua conexão e tente novamente.'
+      };
+    }
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
+    if (error) {
+      const status = (error as { status?: number }).status;
+      const isNetwork = status === undefined || status === 0 || status >= 500;
+      return {
+        success: false,
+        error: isNetwork
+          ? 'Não foi possível conectar ao serviço de autenticação. Tente novamente em instantes.'
+          : 'E-mail ou senha inválidos.'
+      };
+    }
 
-    if (error || !data.user) {
+    if (!data?.user) {
       return { success: false, error: 'E-mail ou senha inválidos.' };
     }
 
@@ -153,7 +177,7 @@ class AuthService {
       await supabase.auth.signOut();
       return {
         success: false,
-        error: 'Esta conta não possui acesso ao painel. Solicite autorização a um administrador.'
+        error: 'Usuário autenticado, mas ainda não possui autorização para acessar o painel.'
       };
     }
 
@@ -165,6 +189,7 @@ class AuthService {
 
     return { success: true, user: adminUser };
   }
+
 
   public async signOut(): Promise<void> {
     await supabase.auth.signOut();

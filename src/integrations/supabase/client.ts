@@ -3,20 +3,27 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// Valores públicos do projeto Supabase (URL + chave publicável).
+// São embutidos no bundle por design e protegidos por RLS. Servem de padrão
+// quando o build é gerado sem as variáveis de ambiente (ex.: publicação).
+const FALLBACK_SUPABASE_URL = 'https://ccpqkxjgiojbkgooqmpn.supabase.co';
+const FALLBACK_SUPABASE_PUBLISHABLE_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNjcHFreGpnaW9qYmtnb29xbXBuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0MzYzNTgsImV4cCI6MjEwNDAxMjM1OH0.uO92qnasQGeRkgf4C3BmkqfuLAIGGp5DRSKBDdWrhIE';
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || FALLBACK_SUPABASE_PUBLISHABLE_KEY;
 
 /** Indica se as credenciais públicas do Supabase estão disponíveis neste build. */
 export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
 
-// Sem credenciais, o cliente é criado com valores inertes para que a criação
-// nunca lance exceção durante o bootstrap e derrube o site público.
-const RESOLVED_URL = SUPABASE_URL || 'https://supabase.invalid';
-const RESOLVED_KEY = SUPABASE_PUBLISHABLE_KEY || 'missing-publishable-key';
+const RESOLVED_URL = SUPABASE_URL;
+const RESOLVED_KEY = SUPABASE_PUBLISHABLE_KEY;
 
-if (!isSupabaseConfigured && typeof console !== 'undefined') {
-  console.warn('[Supabase] Variáveis VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY ausentes neste build.');
+if (!import.meta.env.VITE_SUPABASE_URL && typeof console !== 'undefined') {
+  console.warn('[Supabase] VITE_SUPABASE_URL ausente neste build; usando configuração pública padrão.');
 }
+
 
 
 
