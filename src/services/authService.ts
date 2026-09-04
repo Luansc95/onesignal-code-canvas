@@ -134,7 +134,12 @@ class AuthService {
 
 
   public async signIn(email: string, password: string): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
+    if (!isSupabaseConfigured) {
+      return { success: false, error: 'Serviço de autenticação indisponível no momento.' };
+    }
+
     const cleanEmail = email.trim().toLowerCase();
+
 
     const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
 
