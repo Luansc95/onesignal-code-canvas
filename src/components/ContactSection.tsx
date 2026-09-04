@@ -535,8 +535,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           {/* Right Column: Direct Channels, Support & Credentials */}
           <div className="lg:col-span-5 space-y-6">
             
-{hasWhatsapp && (
             {/* Direct WhatsApp Fast Track Card */}
+            {hasWhatsapp && (
             <div className="p-6 rounded-3xl bg-white/5 border border-white/15 shadow-xl backdrop-blur-md space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
