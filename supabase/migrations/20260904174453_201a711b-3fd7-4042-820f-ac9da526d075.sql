@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.audit_admin_action(text, text, text, text, jsonb) FROM authenticated;
