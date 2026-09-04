@@ -51,46 +51,10 @@ export default function App() {
   // ADMIN PLATFORM ROUTING
   // ==========================================
   if (currentPath.startsWith('/admin')) {
-    const isAuthenticated = authService.isAuthenticated();
-
-    if (currentPath === '/admin/login' || !isAuthenticated) {
-      return <AdminLogin />;
-    }
-
-    const renderAdminContent = () => {
-      switch (currentPath) {
-        case '/admin':
-        case '/admin/dashboard':
-          return <AdminDashboard />;
-        case '/admin/projects':
-          return <AdminProjects />;
-        case '/admin/leads':
-          return <AdminLeads />;
-        case '/admin/leads/scoring':
-          return <AdminLeadScoring />;
-        case '/admin/contacts':
-          return <AdminContacts />;
-        case '/admin/diagnostics':
-          return <AdminDiagnostics />;
-        case '/admin/marketing':
-          return <AdminMarketing />;
-        case '/admin/analytics':
-          return <AdminAnalytics />;
-        case '/admin/settings':
-          return <AdminSettings />;
-        case '/admin/logs':
-          return <AdminAuditLogs />;
-        default:
-          return <AdminDashboard />;
-      }
-    };
-
-    return (
-      <AdminLayout currentPath={currentPath}>
-        {renderAdminContent()}
-      </AdminLayout>
-    );
+    return <AdminArea currentPath={currentPath} />;
   }
+
+
 
   // ==========================================
   // PUBLIC WEBSITE (EXISTING SITE UNCHANGED)
