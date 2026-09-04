@@ -34,6 +34,9 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
     lgpdConsent: true
   });
 
+  const { settings } = useCompanySettings();
+  const hasWhatsapp = Boolean(settings.rawWhatsappNumber);
+
   const [formStarted, setFormStarted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -146,6 +149,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
               Recebemos sua solicitação para <strong className="text-[#22D3EE]">{formData.solutionType}</strong>. Nossa equipe técnica entrará em contato pelo WhatsApp <strong className="text-white">{formData.whatsapp}</strong> ou e-mail.
             </p>
             <div className="pt-4 flex flex-col sm:flex-row justify-center gap-3">
+{hasWhatsapp && (
               <button
                 id="modal-success-whatsapp-btn"
                 onClick={() => {
@@ -163,6 +167,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
                 <MessageSquare className="w-4 h-4" />
                 Continuar no WhatsApp
               </button>
+              )}
               <button
                 onClick={onClose}
                 className="px-6 py-3 rounded-xl bg-white/10 text-slate-300 hover:text-white text-xs sm:text-sm border border-white/15"
