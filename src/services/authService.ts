@@ -1,182 +1,177 @@
 /**
- * Authentication & Role-Based Access Control (RBAC) Service for OneSignal Admin
- * Handles sessions, role validation, demo accounts, and audit event dispatching.
+ * Autenticação real do painel administrativo (Supabase Auth + papéis no banco).
+ * Não existe usuário de demonstração, senha padrão nem fallback de acesso.
  */
 
+import { supabase } from '../integrations/supabase/client';
 import { AdminUser, AdminRole } from '../types';
 
-const AUTH_STORAGE_KEY = 'onesignal_admin_auth_v1';
-
-export const DEMO_ADMIN_USERS: Record<AdminRole, AdminUser> = {
-  admin: {
-    id: 'user_admin_01',
-    name: 'Luan Silva',
-    email: 'admin@onesignal.tech',
-    role: 'admin',
-    roleLabel: '👑 Administrador Geral',
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
-    lastLogin: new Date().toISOString()
-  },
-  editor: {
-    id: 'user_editor_01',
-    name: 'Mariana Duarte',
-    email: 'conteudo@onesignal.tech',
-    role: 'editor',
-    roleLabel: '✏️ Editor de Projetos & Conteúdo',
-    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80',
-    lastLogin: new Date().toISOString()
-  },
-  commercial: {
-    id: 'user_commercial_01',
-    name: 'Carlos Mendes',
-    email: 'comercial@onesignal.tech',
-    role: 'commercial',
-    roleLabel: '💼 Executivo Comercial & CRM',
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
-    lastLogin: new Date().toISOString()
-  },
-  marketing: {
-    id: 'user_marketing_01',
-    name: 'Fernanda Rocha',
-    email: 'marketing@onesignal.tech',
-    role: 'marketing',
-    roleLabel: '📊 Growth & Marketing Analytics',
-    avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80',
-    lastLogin: new Date().toISOString()
-  }
+export const ROLE_LABELS: Record<AdminRole, string> = {
+  admin: '👑 Administrador Geral',
+  editor: '✏️ Editor de Projetos & Conteúdo',
+  commercial: '💼 Executivo Comercial & CRM',
+  marketing: '📊 Growth & Marketing Analytics'
 };
+
+type Listener = () => void;
 
 class AuthService {
   private currentUser: AdminUser | null = null;
-  private token: string | null = null;
+  private loading = true;
+  private listeners = new Set<Listener>();
+  private initialized = false;
 
-  constructor() {
-    this.restoreSession();
+  private emit(): void {
+    this.listeners.forEach((l) => l());
   }
 
-  private restoreSession(): void {
-    if (typeof window === 'undefined') return;
-    try {
-      const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.user && parsed.token && parsed.expiresAt > Date.now()) {
-          this.currentUser = parsed.user;
-          this.token = parsed.token;
-        } else {
-          this.logout();
-        }
-      }
-    } catch {
-      this.logout();
-    }
+  public subscribe(listener: Listener): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  public isLoading(): boolean {
+    return this.loading;
   }
 
   public isAuthenticated(): boolean {
-    return !!this.currentUser && !!this.token;
+    return !!this.currentUser;
   }
 
   public getCurrentUser(): AdminUser | null {
     return this.currentUser;
   }
 
-  public async login(email: string, password: string): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
-    // Simulated secure latency
-    await new Promise((r) => setTimeout(r, 450));
+  /** Carrega perfil + papel do usuário autenticado. */
+  private async loadProfile(userId: string, email: string): Promise<AdminUser | null> {
+    const [{ data: profile }, { data: roleRow }, { data: meta }] = await Promise.all([
+      supabase.from('profiles').select('full_name, email, avatar_url').eq('id', userId).maybeSingle(),
+      supabase.from('user_roles').select('role').eq('user_id', userId).limit(1).maybeSingle(),
+      supabase.from('admin_users_meta').select('is_active').eq('id', userId).maybeSingle()
+    ]);
 
+    if (meta && meta.is_active === false) return null;
+    if (!roleRow?.role) return null;
+
+    const role = roleRow.role as AdminRole;
+
+    return {
+      id: userId,
+      name: profile?.full_name || (profile?.email || email).split('@')[0],
+      email: profile?.email || email,
+      role,
+      roleLabel: ROLE_LABELS[role],
+      avatarUrl: profile?.avatar_url || undefined,
+      lastLogin: new Date().toISOString()
+    };
+  }
+
+  private async syncSession(): Promise<void> {
+    const { data } = await supabase.auth.getUser();
+    const user = data.user;
+
+    if (!user) {
+      this.currentUser = null;
+      this.loading = false;
+      this.emit();
+      return;
+    }
+
+    const adminUser = await this.loadProfile(user.id, user.email || '');
+
+    if (!adminUser) {
+      // Sessão válida, mas sem papel atribuído ou acesso desativado.
+      this.currentUser = null;
+      this.loading = false;
+      this.emit();
+      await supabase.auth.signOut();
+      return;
+    }
+
+    this.currentUser = adminUser;
+    this.loading = false;
+    this.emit();
+  }
+
+  public async initialize(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      // Evita chamadas assíncronas dentro do callback do Supabase.
+      setTimeout(() => {
+        if (!session) {
+          this.currentUser = null;
+          this.loading = false;
+          this.emit();
+          return;
+        }
+        void this.syncSession();
+      }, 0);
+    });
+
+    await this.syncSession();
+  }
+
+  public async signIn(email: string, password: string): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
     const cleanEmail = email.trim().toLowerCase();
 
-    // Check matching demo user or generic admin login
-    let matchedUser: AdminUser | null = null;
+    const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
 
-    if (cleanEmail === 'admin@onesignal.tech' || cleanEmail === 'luansc1995@gmail.com' || cleanEmail === 'onesignal@outlook.com.br') {
-      matchedUser = DEMO_ADMIN_USERS.admin;
-    } else if (cleanEmail === 'conteudo@onesignal.tech') {
-      matchedUser = DEMO_ADMIN_USERS.editor;
-    } else if (cleanEmail === 'comercial@onesignal.tech') {
-      matchedUser = DEMO_ADMIN_USERS.commercial;
-    } else if (cleanEmail === 'marketing@onesignal.tech') {
-      matchedUser = DEMO_ADMIN_USERS.marketing;
-    } else if (cleanEmail.includes('@') && password.length >= 4) {
-      // Default dynamic admin fallback
-      matchedUser = {
-        id: `user_${Date.now()}`,
-        name: cleanEmail.split('@')[0],
-        email: cleanEmail,
-        role: 'admin',
-        roleLabel: '👑 Administrador',
-        lastLogin: new Date().toISOString()
+    if (error || !data.user) {
+      return { success: false, error: 'E-mail ou senha inválidos.' };
+    }
+
+    const adminUser = await this.loadProfile(data.user.id, data.user.email || cleanEmail);
+
+    if (!adminUser) {
+      await supabase.auth.signOut();
+      return {
+        success: false,
+        error: 'Esta conta não possui acesso ao painel. Solicite autorização a um administrador.'
       };
     }
 
-    if (!matchedUser) {
-      return { success: false, error: 'Credenciais inválidas. Verifique seu e-mail e senha.' };
-    }
+    this.currentUser = adminUser;
+    this.loading = false;
+    this.emit();
 
-    const sessionToken = `token_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 days
+    void supabase.rpc('touch_last_sign_in');
 
-    this.currentUser = {
-      ...matchedUser,
-      lastLogin: new Date().toISOString()
-    };
-    this.token = sessionToken;
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(
-        AUTH_STORAGE_KEY,
-        JSON.stringify({
-          user: this.currentUser,
-          token: this.token,
-          expiresAt
-        })
-      );
-    }
-
-    return { success: true, user: this.currentUser };
+    return { success: true, user: adminUser };
   }
 
-  public loginAsDemoRole(role: AdminRole): AdminUser {
-    const user = DEMO_ADMIN_USERS[role] || DEMO_ADMIN_USERS.admin;
-    const sessionToken = `token_demo_${Date.now()}`;
-    const expiresAt = Date.now() + 7 * 24 * 60 * 60 * 1000;
-
-    this.currentUser = {
-      ...user,
-      lastLogin: new Date().toISOString()
-    };
-    this.token = sessionToken;
-
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(
-        AUTH_STORAGE_KEY,
-        JSON.stringify({
-          user: this.currentUser,
-          token: this.token,
-          expiresAt
-        })
-      );
-    }
-
-    return this.currentUser;
-  }
-
-  public logout(): void {
+  public async signOut(): Promise<void> {
+    await supabase.auth.signOut();
     this.currentUser = null;
-    this.token = null;
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    }
+    this.loading = false;
+    this.emit();
   }
 
-  /**
-   * Permission validation helper
-   */
+  /** Compatibilidade com chamadas síncronas existentes. */
+  public logout(): void {
+    void this.signOut();
+  }
+
+  public async requestPasswordReset(email: string): Promise<{ success: boolean; error?: string }> {
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+      redirectTo: `${window.location.origin}/admin/redefinir-senha`
+    });
+    if (error) return { success: false, error: 'Não foi possível enviar o e-mail de redefinição.' };
+    return { success: true };
+  }
+
+  public async updatePassword(newPassword: string): Promise<{ success: boolean; error?: string }> {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  }
+
   public canAccess(section: string): boolean {
     if (!this.currentUser) return false;
     const role = this.currentUser.role;
 
-    if (role === 'admin') return true; // Full access
+    if (role === 'admin') return true;
 
     switch (section) {
       case 'dashboard':
@@ -184,15 +179,13 @@ class AuthService {
       case 'projetos':
         return role === 'editor';
       case 'leads':
+      case 'lead-scoring':
       case 'contatos':
         return role === 'commercial';
       case 'marketing':
       case 'analytics':
       case 'diagnosticos':
         return role === 'marketing';
-      case 'configuracoes':
-      case 'logs':
-        return false; // Only admin (handled above)
       default:
         return false;
     }
