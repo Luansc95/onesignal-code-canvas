@@ -6,6 +6,19 @@ import { brokeredPreviewStorage } from './previewAuthStorage';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+/** Indica se as credenciais públicas do Supabase estão disponíveis neste build. */
+export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY);
+
+// Sem credenciais, o cliente é criado com valores inertes para que a criação
+// nunca lance exceção durante o bootstrap e derrube o site público.
+const RESOLVED_URL = SUPABASE_URL || 'https://supabase.invalid';
+const RESOLVED_KEY = SUPABASE_PUBLISHABLE_KEY || 'missing-publishable-key';
+
+if (!isSupabaseConfigured && typeof console !== 'undefined') {
+  console.warn('[Supabase] Variáveis VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY ausentes neste build.');
+}
+
+
 
 function isNewSupabaseApiKey(value: string): boolean {
   return value.startsWith('sb_publishable_') || value.startsWith('sb_secret_');
@@ -34,9 +47,9 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+export const supabase = createClient<Database>(RESOLVED_URL, RESOLVED_KEY, {
   global: {
-    fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
+    fetch: createSupabaseFetch(RESOLVED_KEY),
   },
   auth: {
     storage: brokeredPreviewStorage(),
