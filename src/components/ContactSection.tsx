@@ -21,7 +21,8 @@ import {
 } from 'lucide-react';
 import { ContactFormData } from '../types';
 import { leadService } from '../services/leadService';
-import { getWhatsAppUrl, COMMERCIAL_CONFIG } from '../config/commercialConfig';
+import { getWhatsAppUrl } from '../config/commercialConfig';
+import { useCompanySettings } from '../hooks/useCompanySettings';
 import { analytics } from '../services/analyticsService';
 
 interface ContactSectionProps {
@@ -35,6 +36,9 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
   initialDescription,
   onOpenPrivacyPolicy
 }) => {
+  const { settings } = useCompanySettings();
+  const hasWhatsapp = Boolean(settings.rawWhatsappNumber);
+
   const [formData, setFormData] = useState<ContactFormData>({
     name: '',
     company: '',
@@ -531,6 +535,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
           {/* Right Column: Direct Channels, Support & Credentials */}
           <div className="lg:col-span-5 space-y-6">
             
+{hasWhatsapp && (
             {/* Direct WhatsApp Fast Track Card */}
             <div className="p-6 rounded-3xl bg-white/5 border border-white/15 shadow-xl backdrop-blur-md space-y-4">
               <div className="flex items-center gap-3">
@@ -556,6 +561,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                 <ExternalLink className="w-4 h-4" />
               </button>
             </div>
+            )}
 
             {/* Corporate Info Card */}
             <div className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-md space-y-4 text-xs text-slate-300">
@@ -568,8 +574,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   <Mail className="w-4 h-4 text-[#22D3EE] mt-0.5" />
                   <div>
                     <span className="text-slate-400 block text-[11px]">E-mail Comercial:</span>
-                    <a href={`mailto:${COMMERCIAL_CONFIG.commercialEmail}`} className="text-white hover:text-[#22D3EE] font-mono">
-                      {COMMERCIAL_CONFIG.commercialEmail}
+                    <a href={`mailto:${settings.commercialEmail}`} className="text-white hover:text-[#22D3EE] font-mono">
+                      {settings.commercialEmail}
                     </a>
                   </div>
                 </div>
@@ -578,7 +584,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   <Building className="w-4 h-4 text-[#2DD4BF] mt-0.5" />
                   <div>
                     <span className="text-slate-400 block text-[11px]">Sede de Engenharia & Inovação:</span>
-                    <span className="text-white">{COMMERCIAL_CONFIG.address.street}, {COMMERCIAL_CONFIG.address.city} - {COMMERCIAL_CONFIG.address.state}</span>
+                    <span className="text-white">{settings.addressDisplay}</span>
                   </div>
                 </div>
 
@@ -586,7 +592,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
                   <Clock className="w-4 h-4 text-sky-400 mt-0.5" />
                   <div>
                     <span className="text-slate-400 block text-[11px]">Horário de Operação:</span>
-                    <span className="text-white">{COMMERCIAL_CONFIG.businessHours}</span>
+                    <span className="text-white">{settings.businessHours}</span>
                   </div>
                 </div>
               </div>
@@ -594,24 +600,28 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
               {/* Social Channels */}
               <div className="pt-3 border-t border-white/10 flex items-center gap-3">
                 <span className="text-slate-400 text-[11px]">Redes Oficiais:</span>
-                <a 
-                  href={COMMERCIAL_CONFIG.social.linkedin}
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="p-2 rounded-xl bg-white/10 text-slate-300 hover:text-[#22D3EE] border border-white/15 transition-colors"
-                  aria-label="LinkedIn OneSignal"
-                >
-                  <Linkedin className="w-4 h-4" />
-                </a>
-                <a 
-                  href={COMMERCIAL_CONFIG.social.instagram}
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="p-2 rounded-xl bg-white/10 text-slate-300 hover:text-[#22D3EE] border border-white/15 transition-colors"
-                  aria-label="Instagram OneSignal"
-                >
-                  <Instagram className="w-4 h-4" />
-                </a>
+                {settings.linkedin && (
+                  <a 
+                    href={settings.linkedin}
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="p-2 rounded-xl bg-white/10 text-slate-300 hover:text-[#22D3EE] border border-white/15 transition-colors"
+                    aria-label="LinkedIn OneSignal"
+                  >
+                    <Linkedin className="w-4 h-4" />
+                  </a>
+                )}
+                {settings.instagram && (
+                  <a 
+                    href={settings.instagram}
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="p-2 rounded-xl bg-white/10 text-slate-300 hover:text-[#22D3EE] border border-white/15 transition-colors"
+                    aria-label="Instagram OneSignal"
+                  >
+                    <Instagram className="w-4 h-4" />
+                  </a>
+                )}
               </div>
             </div>
 
