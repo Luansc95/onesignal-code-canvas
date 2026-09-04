@@ -3,7 +3,7 @@
  * Não existe usuário de demonstração, senha padrão nem fallback de acesso.
  */
 
-import { supabase } from '../integrations/supabase/client';
+import { supabase, isSupabaseConfigured } from '../integrations/supabase/client';
 import { AdminUser, AdminRole } from '../types';
 
 export const ROLE_LABELS: Record<AdminRole, string> = {
