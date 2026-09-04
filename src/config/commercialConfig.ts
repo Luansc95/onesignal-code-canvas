@@ -155,3 +155,16 @@ export function getUtmParameters(): {
     referrer: document.referrer || undefined
   };
 }
+
+/** Indica se o canal WhatsApp está configurado (número salvo em company_settings). */
+export function isWhatsAppConfigured(): boolean {
+  return Boolean((companySettingsService.getSettings().rawWhatsappNumber || '').replace(/\D/g, ''));
+}
+
+/** Abre o WhatsApp quando configurado. Retorna false quando o canal está indisponível. */
+export function openWhatsApp(context: WhatsAppContext = 'general', details?: WhatsAppContextDetails): boolean {
+  const url = getWhatsAppUrl(context, details);
+  if (!url) return false;
+  window.open(url, '_blank');
+  return true;
+}
