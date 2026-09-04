@@ -12,7 +12,7 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({ onOpenBudgetMo
     analytics.track('click_whatsapp', { source: 'final_cta_section' });
     analytics.track('click_consultative_cta', { source: 'final_cta_section' });
     const url = getWhatsAppUrl('consultative');
-    window.open(url, '_blank');
+    if (url) window.open(url, '_blank');
   };
 
   const handleBudgetClick = () => {

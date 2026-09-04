@@ -34,7 +34,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   const handleWhatsAppCase = () => {
     analytics.track('click_whatsapp', { source: 'project_modal', projectName: project.name });
     const url = getWhatsAppUrl('project_case', { projectName: project.name });
-    window.open(url, '_blank');
+    if (url) window.open(url, '_blank');
   };
 
   const handleSimilarProject = () => {

@@ -20,7 +20,7 @@ export const QuickContactFloating: React.FC<QuickContactFloatingProps> = ({ onOp
   const handleWhatsApp = () => {
     analytics.track('click_whatsapp', { source: 'floating_button' });
     const url = getWhatsAppUrl('general');
-    window.open(url, '_blank');
+    if (url) window.open(url, '_blank');
   };
 
   const handleBudgetClick = () => {

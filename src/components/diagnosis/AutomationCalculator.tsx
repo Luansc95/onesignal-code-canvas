@@ -47,7 +47,7 @@ export const AutomationCalculator: React.FC<AutomationCalculatorProps> = ({
     analytics.track('click_whatsapp', { source: 'automation_calculator' });
     const message = `Olá OneSignal! Simulei na Calculadora de Oportunidade do site: nossa equipe gasta aproximadamente ${totalMonthlyHours}h/mês em rotinas repetitivas. Gostaria de avaliar automações para otimizar esse tempo.`;
     const url = getWhatsAppUrl('general', { customMessage: message });
-    window.open(url, '_blank');
+    if (url) window.open(url, '_blank');
   };
 
   return (

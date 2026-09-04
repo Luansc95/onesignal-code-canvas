@@ -154,7 +154,7 @@ export const BudgetModal: React.FC<BudgetModalProps> = ({
                     companyName: formData.company,
                     serviceTitle: formData.solutionType
                   });
-                  window.open(url, '_blank');
+                  if (url) window.open(url, '_blank');
                   onClose();
                 }}
                 className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg"

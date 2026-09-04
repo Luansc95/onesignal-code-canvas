@@ -148,7 +148,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({
       companyName: formData.company,
       serviceTitle: formData.solutionType
     });
-    window.open(url, '_blank');
+    if (url) window.open(url, '_blank');
   };
 
   return (

@@ -125,7 +125,7 @@ export const DiagnosticResult: React.FC<DiagnosticResultProps> = ({
       digitalMaturity: result.maturityLevel,
       topSolution: result.recommendedSolutions[0]?.title
     });
-    window.open(url, '_blank');
+    if (url) window.open(url, '_blank');
   };
 
   const getOpportunityIcon = (iconName: string) => {
