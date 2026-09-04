@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, MessageSquare, ArrowRight, ShieldCheck, CheckCircle2, Zap } from 'lucide-react';
 import { getWhatsAppUrl } from '../config/commercialConfig';
+import { useCompanySettings } from '../hooks/useCompanySettings';
 import { analytics } from '../services/analyticsService';
 
 interface FinalCtaSectionProps {
@@ -8,6 +9,9 @@ interface FinalCtaSectionProps {
 }
 
 export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({ onOpenBudgetModal }) => {
+  const { settings } = useCompanySettings();
+  const hasWhatsapp = Boolean(settings.rawWhatsappNumber);
+
   const handleConsultativeWhatsApp = () => {
     analytics.track('click_whatsapp', { source: 'final_cta_section' });
     analytics.track('click_consultative_cta', { source: 'final_cta_section' });
@@ -68,6 +72,7 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({ onOpenBudgetMo
             </button>
 
             {/* Consultative / WhatsApp CTA */}
+{hasWhatsapp && (
             <button
               id="final-cta-talk-btn"
               onClick={handleConsultativeWhatsApp}
@@ -76,6 +81,7 @@ export const FinalCtaSection: React.FC<FinalCtaSectionProps> = ({ onOpenBudgetMo
               <MessageSquare className="w-5 h-5 text-[#22D3EE] group-hover:scale-110 transition-transform" />
               <span>Falar com a OneSignal</span>
             </button>
+            )}
           </div>
 
           {/* Assurance bullet points */}

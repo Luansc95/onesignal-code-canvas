@@ -3,6 +3,7 @@ import { X, Sparkles, Send, CheckCircle2, ShieldCheck, Clock, MessageSquare, Arr
 import { ContactFormData } from '../types';
 import { leadService } from '../services/leadService';
 import { getWhatsAppUrl } from '../config/commercialConfig';
+import { useCompanySettings } from '../hooks/useCompanySettings';
 import { analytics } from '../services/analyticsService';
 
 interface BudgetModalProps {

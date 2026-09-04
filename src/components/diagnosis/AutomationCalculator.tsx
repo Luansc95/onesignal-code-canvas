@@ -2,6 +2,7 @@ import React, { useState, useId } from 'react';
 import { Calculator, Clock, Users, Zap, ArrowRight, MessageSquare, Sparkles, HelpCircle } from 'lucide-react';
 import { analytics } from '../../services/analyticsService';
 import { getWhatsAppUrl } from '../../config/commercialConfig';
+import { useCompanySettings } from '../../hooks/useCompanySettings';
 
 interface AutomationCalculatorProps {
   onStartDiagnosis?: () => void;
@@ -42,6 +43,9 @@ export const AutomationCalculator: React.FC<AutomationCalculatorProps> = ({
       totalMonthlyHours
     });
   };
+
+  const { settings } = useCompanySettings();
+  const hasWhatsapp = Boolean(settings.rawWhatsappNumber);
 
   const handleWhatsApp = () => {
     analytics.track('click_whatsapp', { source: 'automation_calculator' });
@@ -244,6 +248,7 @@ export const AutomationCalculator: React.FC<AutomationCalculatorProps> = ({
               </button>
             )}
 
+{hasWhatsapp && (
             <button
               type="button"
               onClick={handleWhatsApp}
@@ -252,6 +257,7 @@ export const AutomationCalculator: React.FC<AutomationCalculatorProps> = ({
               <MessageSquare className="w-4 h-4 text-emerald-400" />
               <span>Avaliar Oportunidades no WhatsApp</span>
             </button>
+            )}
           </div>
         </div>
       </div>
