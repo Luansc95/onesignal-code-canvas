@@ -17,7 +17,7 @@ import {
   X, 
   ChevronRight, 
   ShieldCheck, 
-  Check, 
+
   Sparkles,
   Search,
   UserCheck
@@ -25,7 +25,7 @@ import {
 import { authService } from '../../services/authService';
 import { adminService } from '../../services/adminService';
 import { leadService } from '../../services/leadService';
-import { AdminRole } from '../../types';
+
 import { useAuth } from '../../hooks/useAuth';
 import { navigate } from '../../lib/router';
 
