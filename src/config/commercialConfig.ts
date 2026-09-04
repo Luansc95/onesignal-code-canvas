@@ -35,18 +35,19 @@ export const COMMERCIAL_CONFIG: CommercialConfig = {
   tradingName: 'OneSignal Soluções Tecnológicas Ltda',
   commercialEmail: 'onesignal@outlook.com.br',
   supportEmail: 'onesignal@outlook.com.br',
-  phoneDisplay: '(11) 99999-9999',
-  rawWhatsappNumber: '5511999999999', // Placeholder clearly defined for easy configuration
+  phoneDisplay: '',
+  rawWhatsappNumber: '',
   address: {
-    street: 'Av. Paulista, 1106 - Bela Vista',
-    city: 'São Paulo',
-    state: 'SP',
+    street: 'Rua Moreira dos Santos, 52 - Centro',
+    city: 'Barra do Piraí',
+    state: 'RJ',
     country: 'Brasil'
   },
   businessHours: 'Segunda a Sexta: 08:30 às 18:30 (Sistemas em Nuvem 24/7)',
   social: {
-    linkedin: 'https://linkedin.com',
+    linkedin: '',
     instagram: 'https://www.instagram.com/onesignal_tech/'
+
   }
 };
 
