@@ -30,9 +30,11 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   onClose, 
   onSimilarProjectQuote 
 }) => {
+  const { settings } = useCompanySettings();
+  const hasWhatsapp = Boolean(settings.rawWhatsappNumber);
+
   if (!project) return null;
 
-  const hasWhatsapp = Boolean(settings.rawWhatsappNumber);
 
   const handleWhatsAppCase = () => {
     analytics.track('click_whatsapp', { source: 'project_modal', projectName: project.name });
