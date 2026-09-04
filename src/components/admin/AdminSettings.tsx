@@ -346,12 +346,11 @@ export const AdminSettings: React.FC = () => {
           <button
             type="submit"
             disabled={isSaving || isLoading}
-            className={`${isSaving || isLoading ? 'opacity-60 pointer-events-none ' : ''}`.trim() && ''}
-            {...{}}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-sky-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/25 hover:opacity-95 transition-all flex items-center gap-2 cursor-pointer"
+            className={`px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-400 via-teal-400 to-sky-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/25 hover:opacity-95 transition-all flex items-center gap-2 ${isSaving || isLoading ? 'opacity-60 pointer-events-none' : 'cursor-pointer'}`}
           >
             <Save className="w-4 h-4" />
-            <span>Salvar Configurações</span>
+            <span>{isSaving ? 'Salvando...' : 'Salvar Configurações'}</span>
+
           </button>
         </div>
 
