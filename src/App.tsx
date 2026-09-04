@@ -46,11 +46,13 @@ function AdminArea({ currentPath }: { currentPath: string }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#030D1A] flex items-center justify-center">
+      <div className="min-h-screen bg-[#030D1A] flex flex-col items-center justify-center gap-3">
         <div className="w-8 h-8 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-mono text-slate-400">Verificando sessão...</p>
       </div>
     );
   }
+
 
   if (!user || currentPath === '/admin/login') {
     return <AdminLogin />;
