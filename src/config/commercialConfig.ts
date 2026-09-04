@@ -1,7 +1,13 @@
 /**
- * Centralized Commercial & Contact Configuration for OneSignal
- * All commercial parameters, channels, links, and contextual WhatsApp copy are configured here.
+ * Constantes de aplicação da OneSignal.
+ * ATENÇÃO: dados administráveis (telefone, WhatsApp, e-mail, endereço, horário,
+ * redes sociais, SEO) NÃO moram mais aqui — a fonte de verdade é a tabela
+ * `company_settings`, acessada via `companySettingsService`.
+ * Os valores abaixo servem apenas como fallback seguro de tipagem/build.
  */
+
+import { companySettingsService } from '../services/companySettingsService';
+
 
 export interface CommercialConfig {
   companyName: string;
